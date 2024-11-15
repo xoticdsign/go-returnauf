@@ -1,9 +1,6 @@
 package database
 
 import (
-	"math/rand"
-	"time"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -11,7 +8,7 @@ import (
 var db *gorm.DB
 
 type Quote struct {
-	ID    uint   `gorm:"type:BIGINT NOT NULL PRIMARY KEY"`
+	ID    int    `gorm:"type:BIGINT NOT NULL PRIMARY KEY"`
 	Quote string `gorm:"type:VARCHAR NOT NULL"`
 }
 
@@ -33,18 +30,7 @@ func ListAll() []Quote {
 	return quotes
 }
 
-func RandomQuote() Quote {
-	var quote Quote
-
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-	randInt := rand.Intn(201)
-
-	db.Table("quotes").Where("id=?", randInt).First(&quote)
-
-	return quote
-}
-
-func QuoteID(id string) (Quote, error) {
+func GetQoute(id string) (Quote, error) {
 	var quote Quote
 
 	tx := db.Table("quotes").Where("id=?", id).First(&quote)
