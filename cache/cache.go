@@ -16,7 +16,7 @@ func RunRedis() error {
 
 	Cache = redis.NewClient(&config)
 
-	_, err := Cache.Ping(context.Background()).Result()
+	err := Cache.Ping(context.Background()).Err()
 	if err != nil {
 		return err
 	}
