@@ -9,6 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/xoticdsign/auf-citaty-api/cache"
 	"github.com/xoticdsign/auf-citaty-api/database"
 	"github.com/xoticdsign/auf-citaty-api/errorhandler"
 	"github.com/xoticdsign/auf-citaty-api/logging"
@@ -23,6 +24,11 @@ import (
 
 func main() {
 	err := godotenv.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = cache.RunRedis()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -52,10 +58,10 @@ func main() {
 
 	logging.Logger.Info(
 		"Сервер запущен",
-		zap.String("Адрес", "0.0.0.0:6032"),
+		zap.String("Адрес", "0.0.0.0:8080"),
 	)
 
-	err = api.Listen("0.0.0.0:6032")
+	err = api.Listen("0.0.0.0:8080")
 	if err != nil {
 		log.Fatal(err)
 	}
