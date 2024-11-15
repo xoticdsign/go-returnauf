@@ -20,7 +20,6 @@ import (
 // TODO:
 // ??? LEARN AND USE DOCKER
 // ??? LEARN AND USE SWAGGER
-// ??? LEARN ABOUT CACHES
 
 func main() {
 	err := godotenv.Load()
