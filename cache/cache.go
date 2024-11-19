@@ -10,7 +10,7 @@ var Cache *redis.Client
 
 func RunRedis() error {
 	config := redis.Options{
-		Addr:     "127.0.0.1:6379",
+		Addr:     "redis:6379",
 		Password: "",
 	}
 

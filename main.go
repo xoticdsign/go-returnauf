@@ -18,7 +18,6 @@ import (
 )
 
 // TODO:
-// ??? LEARN AND USE DOCKER
 // ??? LEARN AND USE SWAGGER
 
 func main() {
@@ -43,13 +42,13 @@ func main() {
 	}
 
 	api := fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty-api",
+		ServerHeader:  "auf-citaty",
 		StrictRouting: true,
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
 		ErrorHandler:  errorhandler.ErrorHandler,
-		AppName:       "auf-citaty-api",
+		AppName:       "auf-citaty",
 	})
 
 	middleware.GetMiddleware(api)

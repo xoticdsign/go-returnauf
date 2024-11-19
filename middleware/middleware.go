@@ -7,12 +7,14 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 
 	"github.com/xoticdsign/auf-citaty-api/errorhandler"
 )
 
 func GetMiddleware(api *fiber.App) {
+	api.Use(favicon.New(favicon.ConfigDefault))
 	api.Use(keyauth.New(keyauth.Config{
 		ErrorHandler: errorhandler.ErrorHandler,
 		KeyLookup:    "query:" + "auf-citaty-key",

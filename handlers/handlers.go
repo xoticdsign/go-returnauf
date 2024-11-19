@@ -75,7 +75,7 @@ func RandomQuote(c *fiber.Ctx) error {
 
 func QuoteID(c *fiber.Ctx) error {
 	logging.Logger.Info(
-		"Запрос получен",
+		"Запроc получен",
 		zap.String("Метод", c.Method()),
 		zap.String("Путь", c.Path()),
 	)

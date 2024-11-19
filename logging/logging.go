@@ -25,13 +25,13 @@ func RunZap() error {
 			EncodeDuration: zapcore.StringDurationEncoder,
 		},
 		OutputPaths: []string{func() string {
-			logs, err := os.Open("auf-citaty-api.log")
+			logs, err := os.Open("auf-citaty.log")
 			if err != nil {
-				os.Create("auf-citaty-api.log")
+				os.Create("auf-citaty.log")
 			}
 			defer logs.Close()
 
-			path, _ := filepath.Abs("auf-citaty-api.log")
+			path, _ := filepath.Abs("auf-citaty.log")
 
 			return path
 		}()},
