@@ -1,3 +1,5 @@
+# Этап сборки
+
 FROM golang:1.23 AS builder
 
 WORKDIR /auf-citaty
@@ -6,6 +8,8 @@ COPY ./ ./
 
 RUN go mod download
 RUN go build -o auf-citaty ./main.go
+
+# Этап Runtime
 
 FROM gcr.io/distroless/base-debian12
 

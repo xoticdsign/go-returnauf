@@ -1,5 +1,7 @@
 services:
 
+  # Основной сервис
+
   auf-citaty:
     image: auf-citaty
     container_name: auf-citaty
@@ -13,6 +15,8 @@ services:
       - auf-citaty-network
     restart: on-failure:5
 
+  # Redis
+
   redis:
     image: redis/redis-stack-server
     container_name: redis
@@ -22,6 +26,8 @@ services:
       - auf-citaty-network
     restart: on-failure:5
   
+# Кастомная сеть
+
 networks:
 
   auf-citaty-network:
