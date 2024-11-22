@@ -1,6 +1,8 @@
 package database
 
 import (
+	"os"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -13,9 +15,11 @@ type Quote struct {
 }
 
 func RunGORM() error {
+	dsn := os.Getenv("DB_DSN")
+
 	var err error
 
-	db, err = gorm.Open(sqlite.Open("db.sqlite"), &gorm.Config{})
+	db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return gorm.ErrInvalidDB
 	}

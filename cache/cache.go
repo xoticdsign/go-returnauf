@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"os"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -9,9 +10,12 @@ import (
 var Cache *redis.Client
 
 func RunRedis() error {
+	redisAddr := os.Getenv("REDIS_ADDRESS")
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+
 	config := redis.Options{
-		Addr:     "redis:6379",
-		Password: "",
+		Addr:     redisAddr,
+		Password: redisPassword,
 	}
 
 	Cache = redis.NewClient(&config)

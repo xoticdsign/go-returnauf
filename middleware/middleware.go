@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,10 +17,19 @@ import (
 func GetMiddleware(api *fiber.App) {
 	api.Use(favicon.New(favicon.ConfigDefault))
 	api.Use(keyauth.New(keyauth.Config{
+		Next:         authFiler,
 		ErrorHandler: errorhandler.ErrorHandler,
 		KeyLookup:    "query:" + "auf-citaty-key",
 		Validator:    keyauthValidator,
 	}))
+}
+
+func authFiler(c *fiber.Ctx) bool {
+	path := c.Path()
+	if strings.Contains(path, "swagger") {
+		return true
+	}
+	return false
 }
 
 func keyauthValidator(c *fiber.Ctx, key string) (bool, error) {
