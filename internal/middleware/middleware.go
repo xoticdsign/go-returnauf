@@ -11,7 +11,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 
-	"github.com/xoticdsign/auf-citaty/internal/utils/errhandling"
+	"github.com/xoticdsign/auf-citaty/utils/errhandling"
 )
 
 func GetMiddleware(app *fiber.App) {

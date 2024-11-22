@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/xoticdsign/auf-citaty/internal/models/responses"
+	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
 var db *gorm.DB

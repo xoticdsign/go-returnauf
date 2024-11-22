@@ -13,8 +13,8 @@ import (
 
 	"github.com/xoticdsign/auf-citaty/internal/cache"
 	"github.com/xoticdsign/auf-citaty/internal/database"
-	"github.com/xoticdsign/auf-citaty/internal/models/responses"
-	"github.com/xoticdsign/auf-citaty/internal/utils/logging"
+	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
 // List all quotes
