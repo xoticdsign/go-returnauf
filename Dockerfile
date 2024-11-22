@@ -15,7 +15,7 @@ FROM gcr.io/distroless/base-debian12
 
 WORKDIR /auf-citaty
 
-COPY --from=builder /auf-citaty/auf-citaty /auf-citaty/db.sqlite /auf-citaty/.env ./
+COPY --from=builder /auf-citaty/auf-citaty /auf-citaty/db.sqlite ./
 
 EXPOSE 8080
 

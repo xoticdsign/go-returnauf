@@ -1,34 +1,32 @@
 services:
-
-  # Основной сервис
-
   auf-citaty:
+    build: ./
     image: auf-citaty
     container_name: auf-citaty
-    depends_on:
-      - redis
-    build: ./
     command: ./auf-citaty
-    ports:
-      - 8080:8080
+    environment:
+      REDIS_ADDRESS: redis:6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      DB_DSN: ${DB_DSN}
+      SERVER_ADDRESS: ${SERVER_ADDRESS}
+      AUF_CITATY_KEY: ${AUF_CITATY_KEY}
+    restart: on-failure:5
     networks:
       - auf-citaty-network
-    restart: on-failure:5
-
-  # Redis
+    ports:
+      - 8080:8080
+    depends_on:
+      - redis
 
   redis:
     image: redis/redis-stack-server
     container_name: redis
-    ports:
-      - "6379:6379"
+    restart: on-failure:5
     networks:
       - auf-citaty-network
-    restart: on-failure:5
-  
-# Кастомная сеть
+    ports:
+      - "6379:6379"
 
 networks:
-
   auf-citaty-network:
     
