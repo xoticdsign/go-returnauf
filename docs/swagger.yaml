@@ -1,0 +1,129 @@
+basePath: /
+definitions:
+  database.Quote:
+    properties:
+      id:
+        type: integer
+      quote:
+        type: string
+    type: object
+  errorhandler.Error:
+    properties:
+      code:
+        type: integer
+      message:
+        type: string
+    type: object
+host: 127.0.0.1:8080
+info:
+  contact:
+    email: xoticdollarsign@outlook.com
+    name: xoti$
+    url: https://t.me/xoticdsign
+  description: TODO
+  license:
+    name: MIT
+    url: https://mit-license.org/
+  title: Auf Citaty API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      description: Возвращает полный список цитат, хранящихся в базе данных. Полезно
+        для получения всех доступных данных для анализа, отображения или других операций.
+        Цитаты возвращаются в формате JSON.
+      operationId: list-all
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Quote'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+      security:
+      - KeyAuth: []
+      summary: Предоставляет все цитаты
+      tags:
+      - Операции с цитатами
+  /{id}:
+    get:
+      description: Возвращает цитату по её уникальному идентификатору (ID). Если цитата
+        не найдена в кэше, происходит обращение к базе данных. Полученная цитата затем
+        сохраняется в кэш для ускорения последующих запросов. Если запрошенного ID
+        нет в базе данных, возвращается ошибка.
+      operationId: quote-id
+      parameters:
+      - description: Позволяет указать ID цитаты
+        example: "105"
+        in: path
+        name: id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Quote'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+      security:
+      - KeyAuth: []
+      summary: Предоставляет цитату по заданному ID
+      tags:
+      - Операции с цитатами
+  /random:
+    get:
+      description: Возвращает случайную цитату из базы данных. Если цитата отсутствует
+        в кэше, то она извлекается из базы данных, добавляется в кэш и возвращается
+        пользователю. Позволяет отображать динамическое содержимое, не перегружая
+        базу данных. Случайность обеспечивается генератором случайных чисел.
+      operationId: random-quote
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/database.Quote'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errorhandler.Error'
+      security:
+      - KeyAuth: []
+      summary: Предоставляет случайную цитату
+      tags:
+      - Операции с цитатами
+produces:
+- application/json
+schemes:
+- http
+securityDefinitions:
+  KeyAuth:
+    in: query
+    name: auf-citaty-key
+    type: apiKey
+swagger: "2.0"
