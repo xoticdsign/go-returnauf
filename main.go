@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -11,22 +12,35 @@ import (
 
 	"github.com/xoticdsign/auf-citaty-api/cache"
 	"github.com/xoticdsign/auf-citaty-api/database"
+	_ "github.com/xoticdsign/auf-citaty-api/docs"
 	"github.com/xoticdsign/auf-citaty-api/errorhandler"
 	"github.com/xoticdsign/auf-citaty-api/logging"
 	"github.com/xoticdsign/auf-citaty-api/middleware"
 	"github.com/xoticdsign/auf-citaty-api/routes"
 )
 
-// TODO:
-// ??? LEARN AND USE SWAGGER
-
+// General description
+//
+//	@title						Auf Citaty API
+//	@version					1.0.0
+//	@description				TODO
+//	@contact.name				xoti$
+//	@contact.url				https://t.me/xoticdsign
+//	@contact.email				xoticdollarsign@outlook.com
+//	@license.name				MIT
+//	@license.url				https://mit-license.org/
+//	@host						127.0.0.1:8080
+//	@BasePath					/
+//	@produce					json
+//	@schemes					http
+//
+//	@securitydefinitions.apikey	KeyAuth
+//	@in							query
+//	@name						auf-citaty-key
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
+	godotenv.Load()
 
-	err = cache.RunRedis()
+	err := cache.RunRedis()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -54,12 +68,14 @@ func main() {
 	middleware.GetMiddleware(api)
 	routes.GetRoutes(api)
 
+	addr := os.Getenv("SERVER_ADDRESS")
+
 	logging.Logger.Info(
 		"Сервер запущен",
-		zap.String("Адрес", "0.0.0.0:8080"),
+		zap.String("Адрес", addr),
 	)
 
-	err = api.Listen("0.0.0.0:8080")
+	err = api.Listen(addr)
 	if err != nil {
 		log.Fatal(err)
 	}
