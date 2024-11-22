@@ -8,8 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/xoticdsign/auf-citaty/internal/models/responses"
-	"github.com/xoticdsign/auf-citaty/internal/utils/logging"
+	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
 func ErrorHandler(c *fiber.Ctx, err error) error {

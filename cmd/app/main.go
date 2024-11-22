@@ -15,8 +15,8 @@ import (
 	"github.com/xoticdsign/auf-citaty/internal/database"
 	"github.com/xoticdsign/auf-citaty/internal/middleware"
 	"github.com/xoticdsign/auf-citaty/internal/routes"
-	"github.com/xoticdsign/auf-citaty/internal/utils/errhandling"
-	"github.com/xoticdsign/auf-citaty/internal/utils/logging"
+	"github.com/xoticdsign/auf-citaty/utils/errhandling"
+	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
 // General description
