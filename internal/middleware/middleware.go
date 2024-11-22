@@ -11,14 +11,14 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 
-	"github.com/xoticdsign/auf-citaty-api/errorhandler"
+	"github.com/xoticdsign/auf-citaty/internal/utils/errhandling"
 )
 
-func GetMiddleware(api *fiber.App) {
-	api.Use(favicon.New(favicon.ConfigDefault))
-	api.Use(keyauth.New(keyauth.Config{
+func GetMiddleware(app *fiber.App) {
+	app.Use(favicon.New(favicon.ConfigDefault))
+	app.Use(keyauth.New(keyauth.Config{
 		Next:         authFiler,
-		ErrorHandler: errorhandler.ErrorHandler,
+		ErrorHandler: errhandling.ErrorHandler,
 		KeyLookup:    "query:" + "auf-citaty-key",
 		Validator:    keyauthValidator,
 	}))

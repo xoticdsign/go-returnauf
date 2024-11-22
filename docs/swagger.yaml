@@ -1,17 +1,17 @@
 basePath: /
 definitions:
-  database.Quote:
-    properties:
-      id:
-        type: integer
-      quote:
-        type: string
-    type: object
-  errorhandler.Error:
+  responses.Error:
     properties:
       code:
         type: integer
       message:
+        type: string
+    type: object
+  responses.Quote:
+    properties:
+      id:
+        type: integer
+      quote:
         type: string
     type: object
 host: 127.0.0.1:8080
@@ -39,15 +39,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Quote'
+            $ref: '#/definitions/responses.Quote'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
       security:
       - KeyAuth: []
       summary: Предоставляет все цитаты
@@ -72,19 +72,19 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Quote'
+            $ref: '#/definitions/responses.Quote'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
       security:
       - KeyAuth: []
       summary: Предоставляет цитату по заданному ID
@@ -103,15 +103,15 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/database.Quote'
+            $ref: '#/definitions/responses.Quote'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/errorhandler.Error'
+            $ref: '#/definitions/responses.Error'
       security:
       - KeyAuth: []
       summary: Предоставляет случайную цитату

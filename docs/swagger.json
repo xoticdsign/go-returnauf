@@ -43,19 +43,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Quote"
+                            "$ref": "#/definitions/responses.Quote"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     }
                 }
@@ -81,19 +81,19 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Quote"
+                            "$ref": "#/definitions/responses.Quote"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     }
                 }
@@ -128,25 +128,25 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/database.Quote"
+                            "$ref": "#/definitions/responses.Quote"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     },
                     "404": {
                         "description": "Not Found",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/errorhandler.Error"
+                            "$ref": "#/definitions/responses.Error"
                         }
                     }
                 }
@@ -154,24 +154,24 @@
         }
     },
     "definitions": {
-        "database.Quote": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "integer"
-                },
-                "quote": {
-                    "type": "string"
-                }
-            }
-        },
-        "errorhandler.Error": {
+        "responses.Error": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "responses.Quote": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "quote": {
                     "type": "string"
                 }
             }

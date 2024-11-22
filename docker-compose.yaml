@@ -7,7 +7,7 @@ services:
     environment:
       REDIS_ADDRESS: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      DB_DSN: ${DB_DSN}
+      DB_DSN: db.sqlite
       SERVER_ADDRESS: ${SERVER_ADDRESS}
       AUF_CITATY_KEY: ${AUF_CITATY_KEY}
     restart: on-failure:5

@@ -10,13 +10,13 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/xoticdsign/auf-citaty-api/cache"
-	"github.com/xoticdsign/auf-citaty-api/database"
-	_ "github.com/xoticdsign/auf-citaty-api/docs"
-	"github.com/xoticdsign/auf-citaty-api/errorhandler"
-	"github.com/xoticdsign/auf-citaty-api/logging"
-	"github.com/xoticdsign/auf-citaty-api/middleware"
-	"github.com/xoticdsign/auf-citaty-api/routes"
+	_ "github.com/xoticdsign/auf-citaty/docs"
+	"github.com/xoticdsign/auf-citaty/internal/cache"
+	"github.com/xoticdsign/auf-citaty/internal/database"
+	"github.com/xoticdsign/auf-citaty/internal/middleware"
+	"github.com/xoticdsign/auf-citaty/internal/routes"
+	"github.com/xoticdsign/auf-citaty/internal/utils/errhandling"
+	"github.com/xoticdsign/auf-citaty/internal/utils/logging"
 )
 
 // General description
@@ -55,27 +55,28 @@ func main() {
 		log.Fatal(err)
 	}
 
-	api := fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty",
+	appName := os.Getenv("APP_NAME")
+	addr := os.Getenv("SERVER_ADDRESS")
+
+	app := fiber.New(fiber.Config{
+		ServerHeader:  appName,
 		StrictRouting: true,
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
-		ErrorHandler:  errorhandler.ErrorHandler,
-		AppName:       "auf-citaty",
+		ErrorHandler:  errhandling.ErrorHandler,
+		AppName:       appName,
 	})
 
-	middleware.GetMiddleware(api)
-	routes.GetRoutes(api)
-
-	addr := os.Getenv("SERVER_ADDRESS")
+	middleware.GetMiddleware(app)
+	routes.GetRoutes(app)
 
 	logging.Logger.Info(
 		"Сервер запущен",
-		zap.String("Адрес", addr),
+		zap.String("Address", addr),
 	)
 
-	err = api.Listen(addr)
+	err = app.Listen(addr)
 	if err != nil {
 		log.Fatal(err)
 	}
