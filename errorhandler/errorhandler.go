@@ -11,6 +11,11 @@ import (
 	"github.com/xoticdsign/auf-citaty-api/logging"
 )
 
+type Error struct {
+	Code    int
+	Message string
+}
+
 func ErrorHandler(c *fiber.Ctx, err error) error {
 	logging.Logger.Error(
 		"Ошибка",
@@ -31,7 +36,7 @@ func ErrorHandler(c *fiber.Ctx, err error) error {
 	if errors.As(err, &e) {
 		return c.Status(e.Code).JSON(e)
 	}
-	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Error{
+	return c.Status(fiber.StatusInternalServerError).JSON(Error{
 		Code:    fiber.StatusInternalServerError,
 		Message: err.Error(),
 	})
