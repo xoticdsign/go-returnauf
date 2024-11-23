@@ -10,12 +10,9 @@ import (
 var Cache *redis.Client
 
 func RunRedis() error {
-	redisAddr := os.Getenv("REDIS_ADDRESS")
-	redisPassword := os.Getenv("REDIS_PASSWORD")
-
 	config := redis.Options{
-		Addr:     redisAddr,
-		Password: redisPassword,
+		Addr:     os.Getenv("REDIS_ADDRESS"),
+		Password: os.Getenv("REDIS_PASSWORD"),
 	}
 
 	Cache = redis.NewClient(&config)

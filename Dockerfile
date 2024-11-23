@@ -9,7 +9,7 @@ RUN go build -o auf-citaty ./cmd/app/main.go
 
 FROM gcr.io/distroless/base-debian12
 
-WORKDIR /auf-citaty
+WORKDIR /app
 
 COPY --from=builder /auf-citaty/auf-citaty /auf-citaty/internal/database/db.sqlite ./
 

@@ -1,14 +1,14 @@
 services:
-  auf-citaty:
+  server:
     build: ./
     image: auf-citaty
-    container_name: auf-citaty
+    container_name: server
     command: ./auf-citaty
     environment:
+      SERVER_ADDRESS: ${SERVER_ADDRESS}
       REDIS_ADDRESS: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-      DB_DSN: db.sqlite
-      SERVER_ADDRESS: ${SERVER_ADDRESS}
+      DB_ADDRESS: db.sqlite
       AUF_CITATY_KEY: ${AUF_CITATY_KEY}
     restart: on-failure:5
     networks:

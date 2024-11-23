@@ -13,11 +13,9 @@ import (
 var db *gorm.DB
 
 func RunGORM() error {
-	dsn := os.Getenv("DB_DSN")
-
 	var err error
 
-	db, err = gorm.Open(sqlite.Open(dsn), &gorm.Config{
+	db, err = gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {

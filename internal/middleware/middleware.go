@@ -19,7 +19,7 @@ func GetMiddleware(app *fiber.App) {
 	app.Use(keyauth.New(keyauth.Config{
 		Next:         authFiler,
 		ErrorHandler: errhandling.ErrorHandler,
-		KeyLookup:    "query:" + "auf-citaty-key",
+		KeyLookup:    "query:auf-citaty-key",
 		Validator:    keyauthValidator,
 	}))
 }

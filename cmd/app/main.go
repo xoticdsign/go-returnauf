@@ -55,17 +55,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	appName := os.Getenv("APP_NAME")
-	addr := os.Getenv("SERVER_ADDRESS")
-
 	app := fiber.New(fiber.Config{
-		ServerHeader:  appName,
+		ServerHeader:  "auf-citaty",
 		StrictRouting: true,
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
 		ErrorHandler:  errhandling.ErrorHandler,
-		AppName:       appName,
+		AppName:       "auf-citaty",
 	})
 
 	middleware.GetMiddleware(app)
@@ -73,10 +70,10 @@ func main() {
 
 	logging.Logger.Info(
 		"Сервер запущен",
-		zap.String("Address", addr),
+		zap.String("Address", os.Getenv("SERVER_ADDRESS")),
 	)
 
-	err = app.Listen(addr)
+	err = app.Listen(os.Getenv("SERVER_ADDRESS"))
 	if err != nil {
 		log.Fatal(err)
 	}
