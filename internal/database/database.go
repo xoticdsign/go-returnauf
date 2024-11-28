@@ -10,32 +10,37 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-var db *gorm.DB
+type Database interface {
+	ListAll() []responses.Quote
+	GetQuote(id string) (responses.Quote, error)
+}
 
-func RunGORM() error {
-	var err error
+type GormDB struct {
+	db *gorm.DB
+}
 
-	db, err = gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
+func RunGORM() (*GormDB, error) {
+	db, err := gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
-		return gorm.ErrInvalidDB
+		return nil, gorm.ErrInvalidDB
 	}
-	return nil
+	return &GormDB{db: db}, nil
 }
 
-func ListAll() []responses.Quote {
+func (g *GormDB) ListAll() []responses.Quote {
 	var quotes []responses.Quote
 
-	db.Table("quotes").Find(&quotes)
+	g.db.Table("quotes").Find(&quotes)
 
 	return quotes
 }
 
-func GetQoute(id string) (responses.Quote, error) {
+func (g *GormDB) GetQuote(id string) (responses.Quote, error) {
 	var quote responses.Quote
 
-	tx := db.Table("quotes").Where("id=?", id).First(&quote)
+	tx := g.db.Table("quotes").Where("id=?", id).First(&quote)
 	if tx.RowsAffected == 0 {
 		return responses.Quote{}, gorm.ErrRecordNotFound
 	}

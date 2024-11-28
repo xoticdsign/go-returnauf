@@ -17,6 +17,10 @@ import (
 	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
+type Handlers struct {
+	DB database.Database
+}
+
 // List all quotes
 //
 // @description Возвращает полный список цитат, хранящихся в базе данных. Полезно для получения всех доступных данных для анализа, отображения или других операций. Цитаты возвращаются в формате JSON.
@@ -31,8 +35,8 @@ import (
 // @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
 // @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
 // @router      / [get]
-func ListAll(c *fiber.Ctx) error {
-	quotes := database.ListAll()
+func (h *Handlers) ListAll(c *fiber.Ctx) error {
+	quotes := h.DB.ListAll()
 
 	logging.Logger.Info(
 		"Обработан запрос",
@@ -58,7 +62,7 @@ func ListAll(c *fiber.Ctx) error {
 // @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
 // @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
 // @router      /random [get]
-func RandomQuote(c *fiber.Ctx) error {
+func (h *Handlers) RandomQuote(c *fiber.Ctx) error {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	randInt := rand.Intn(201)
 
@@ -66,7 +70,7 @@ func RandomQuote(c *fiber.Ctx) error {
 
 	quote, err := cache.Cache.Get(context.Background(), id).Result()
 	if err == redis.Nil {
-		quote, _ := database.GetQoute(id)
+		quote, _ := h.DB.GetQuote(id)
 
 		cache.Cache.Set(context.Background(), id, quote.Quote, time.Minute*1)
 
@@ -109,7 +113,7 @@ func RandomQuote(c *fiber.Ctx) error {
 // @failure     404 {object} responses.Error Происходит, если запрашиваемой цитаты         не           существует
 // @failure     500 {object} responses.Error Происходит, если произошла     неопределенная ошибка
 // @router      /{id} [get]
-func QuoteID(c *fiber.Ctx) error {
+func (h *Handlers) QuoteID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -119,7 +123,7 @@ func QuoteID(c *fiber.Ctx) error {
 
 	quote, err := cache.Cache.Get(context.Background(), id).Result()
 	if err == redis.Nil {
-		quote, err := database.GetQoute(id)
+		quote, err := h.DB.GetQuote(id)
 		if err != nil {
 			return fiber.ErrNotFound
 		}

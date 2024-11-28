@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
 
 	"go.uber.org/zap"
@@ -13,8 +14,8 @@ import (
 	_ "github.com/xoticdsign/auf-citaty/docs"
 	"github.com/xoticdsign/auf-citaty/internal/cache"
 	"github.com/xoticdsign/auf-citaty/internal/database"
+	"github.com/xoticdsign/auf-citaty/internal/handlers"
 	"github.com/xoticdsign/auf-citaty/internal/middleware"
-	"github.com/xoticdsign/auf-citaty/internal/routes"
 	"github.com/xoticdsign/auf-citaty/utils/errhandling"
 	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
@@ -50,7 +51,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	err = database.RunGORM()
+	gormDB, err := database.RunGORM()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,7 +67,13 @@ func main() {
 	})
 
 	middleware.GetMiddleware(app)
-	routes.GetRoutes(app)
+
+	handler := &handlers.Handlers{DB: gormDB}
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
+	app.Get("/", handler.ListAll)
+	app.Get("/random", handler.RandomQuote)
+	app.Get("/:id", handler.QuoteID)
 
 	logging.Logger.Info(
 		"Сервер запущен",
