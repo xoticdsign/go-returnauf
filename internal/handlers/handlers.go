@@ -1,24 +1,52 @@
 package handlers
 
 import (
-	"context"
+	"errors"
 	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/redis/go-redis/v9"
-
-	"go.uber.org/zap"
+	"github.com/gofiber/fiber/v2/middleware/keyauth"
 
 	"github.com/xoticdsign/auf-citaty/internal/cache"
 	"github.com/xoticdsign/auf-citaty/internal/database"
+	"github.com/xoticdsign/auf-citaty/internal/logging"
 	"github.com/xoticdsign/auf-citaty/models/responses"
-	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
-type Handlers struct {
-	DB database.Database
+type Dependencies struct {
+	DB     database.Queuer
+	Cache  cache.Cacher
+	Logger logging.Logger
+}
+
+func (d *Dependencies) Error(c *fiber.Ctx, err error) error {
+	if err == keyauth.ErrMissingOrMalformedAPIKey {
+		d.Logger.Error(fiber.ErrUnauthorized.Message, c)
+
+		return c.Status(fiber.StatusUnauthorized).JSON(responses.Error{
+			Code:    fiber.StatusUnauthorized,
+			Message: fiber.ErrUnauthorized.Message,
+		})
+	}
+
+	var e *fiber.Error
+
+	if errors.As(err, &e) {
+		d.Logger.Error(e.Message, c)
+
+		return c.Status(e.Code).JSON(responses.Error{
+			Code:    e.Code,
+			Message: e.Message,
+		})
+	}
+	d.Logger.Error(err.Error(), c)
+
+	return c.Status(fiber.StatusInternalServerError).JSON(responses.Error{
+		Code:    fiber.StatusInternalServerError,
+		Message: err.Error(),
+	})
 }
 
 // List all quotes
@@ -35,15 +63,12 @@ type Handlers struct {
 // @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
 // @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
 // @router      / [get]
-func (h *Handlers) ListAll(c *fiber.Ctx) error {
-	quotes := h.DB.ListAll()
+func (d *Dependencies) ListAll(c *fiber.Ctx) error {
+	d.Logger.Info("Обращение к базе данных", c)
 
-	logging.Logger.Info(
-		"Обработан запрос",
-		zap.String("Method", c.Method()),
-		zap.String("Path", c.Path()),
-		zap.Duration("Time Passed", time.Since(c.Locals("time").(time.Time))),
-	)
+	quotes := d.DB.ListAll()
+
+	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(quotes)
 }
@@ -62,34 +87,35 @@ func (h *Handlers) ListAll(c *fiber.Ctx) error {
 // @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
 // @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
 // @router      /random [get]
-func (h *Handlers) RandomQuote(c *fiber.Ctx) error {
+func (d *Dependencies) RandomQuote(c *fiber.Ctx) error {
 	rand.New(rand.NewSource(time.Now().UnixNano()))
 	randInt := rand.Intn(201)
 
 	id := strconv.Itoa(randInt)
 
-	quote, err := cache.Cache.Get(context.Background(), id).Result()
-	if err == redis.Nil {
-		quote, _ := h.DB.GetQuote(id)
+	quote, errStr := d.Cache.Get(id)
+	if errStr == "Failed" {
+		d.Logger.Error("Не удалось достать кэш", c)
+	}
+	if errStr == "Nil" {
+		d.Logger.Warn("Кэш отсутствует", c)
+		d.Logger.Info("Обращение к базе данных", c)
 
-		cache.Cache.Set(context.Background(), id, quote.Quote, time.Minute*1)
+		quote, _ := d.DB.GetQuote(id)
 
-		logging.Logger.Info(
-			"Обработан запрос",
-			zap.String("Method", c.Method()),
-			zap.String("Path", c.Path()),
-			zap.Duration("Time Passed", time.Since(c.Locals("time").(time.Time))),
-		)
+		err := d.Cache.Set(id, quote.Quote, time.Minute*1)
+		if err != nil {
+			d.Logger.Error("Не удалось кэшировать данные", c)
+		}
+
+		d.Logger.Info("Данные добавлены в кэш", c)
+		d.Logger.Info("Обработан запрос", c)
 
 		return c.JSON(quote)
 	}
 
-	logging.Logger.Info(
-		"Обработан запрос",
-		zap.String("Method", c.Method()),
-		zap.String("Path", c.Path()),
-		zap.Duration("Time Passed", time.Since(c.Locals("time").(time.Time))),
-	)
+	d.Logger.Info("Данные получены из кэша", c)
+	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(responses.Quote{
 		ID:    randInt,
@@ -113,7 +139,7 @@ func (h *Handlers) RandomQuote(c *fiber.Ctx) error {
 // @failure     404 {object} responses.Error Происходит, если запрашиваемой цитаты         не           существует
 // @failure     500 {object} responses.Error Происходит, если произошла     неопределенная ошибка
 // @router      /{id} [get]
-func (h *Handlers) QuoteID(c *fiber.Ctx) error {
+func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
 	id := c.Params("id")
 
 	idInt, err := strconv.Atoi(id)
@@ -121,31 +147,32 @@ func (h *Handlers) QuoteID(c *fiber.Ctx) error {
 		return fiber.ErrNotFound
 	}
 
-	quote, err := cache.Cache.Get(context.Background(), id).Result()
-	if err == redis.Nil {
-		quote, err := h.DB.GetQuote(id)
+	quote, errStr := d.Cache.Get(id)
+	if errStr == "Failed" {
+		d.Logger.Error("Не удалось достать кэш", c)
+	}
+	if errStr == "Nil" {
+		d.Logger.Warn("Кэш отсутствует", c)
+		d.Logger.Info("Обращение к базе данных", c)
+
+		quote, err := d.DB.GetQuote(id)
 		if err != nil {
 			return fiber.ErrNotFound
 		}
 
-		cache.Cache.Set(context.Background(), id, quote.Quote, time.Minute*1)
+		err = d.Cache.Set(id, quote.Quote, time.Minute*1)
+		if err != nil {
+			d.Logger.Error("Не удалось кэшировать данные", c)
+		}
 
-		logging.Logger.Info(
-			"Обработан запрос",
-			zap.String("Method", c.Method()),
-			zap.String("Path", c.Path()),
-			zap.Duration("Time Passed", time.Since(c.Locals("time").(time.Time))),
-		)
+		d.Logger.Info("Данные добавлены в кэш", c)
+		d.Logger.Info("Обработан запрос", c)
 
 		return c.JSON(quote)
 	}
 
-	logging.Logger.Info(
-		"Обработан запрос",
-		zap.String("Method", c.Method()),
-		zap.String("Path", c.Path()),
-		zap.Duration("Time Passed", time.Since(c.Locals("time").(time.Time))),
-	)
+	d.Logger.Info("Данные получены из кэша", c)
+	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(responses.Quote{
 		ID:    idInt,

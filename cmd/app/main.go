@@ -6,18 +6,17 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/favicon"
+	"github.com/gofiber/fiber/v2/middleware/keyauth"
 	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
-
-	"go.uber.org/zap"
 
 	_ "github.com/xoticdsign/auf-citaty/docs"
 	"github.com/xoticdsign/auf-citaty/internal/cache"
 	"github.com/xoticdsign/auf-citaty/internal/database"
 	"github.com/xoticdsign/auf-citaty/internal/handlers"
+	"github.com/xoticdsign/auf-citaty/internal/logging"
 	"github.com/xoticdsign/auf-citaty/internal/middleware"
-	"github.com/xoticdsign/auf-citaty/utils/errhandling"
-	"github.com/xoticdsign/auf-citaty/utils/logging"
 )
 
 // General description
@@ -41,19 +40,25 @@ import (
 func main() {
 	godotenv.Load()
 
-	err := cache.RunRedis()
+	cache, err := cache.RunRedis()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = logging.RunZap()
+	logger, err := logging.RunZap()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	gormDB, err := database.RunGORM()
+	db, err := database.RunGORM()
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	dependencies := &handlers.Dependencies{
+		DB:     db,
+		Cache:  cache,
+		Logger: logger,
 	}
 
 	app := fiber.New(fiber.Config{
@@ -62,23 +67,22 @@ func main() {
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
-		ErrorHandler:  errhandling.ErrorHandler,
+		ErrorHandler:  dependencies.Error,
 		AppName:       "auf-citaty",
 	})
 
-	middleware.GetMiddleware(app)
-
-	handler := &handlers.Handlers{DB: gormDB}
+	app.Use(favicon.New(favicon.ConfigDefault))
+	app.Use(keyauth.New(keyauth.Config{
+		Next:         middleware.AuthFiler,
+		ErrorHandler: dependencies.Error,
+		KeyLookup:    "query:auf-citaty-key",
+		Validator:    middleware.KeyauthValidator,
+	}))
 
 	app.Get("/swagger/*", swagger.HandlerDefault)
-	app.Get("/", handler.ListAll)
-	app.Get("/random", handler.RandomQuote)
-	app.Get("/:id", handler.QuoteID)
-
-	logging.Logger.Info(
-		"Сервер запущен",
-		zap.String("Address", os.Getenv("SERVER_ADDRESS")),
-	)
+	app.Get("/", dependencies.ListAll)
+	app.Get("/random", dependencies.RandomQuote)
+	app.Get("/:id", dependencies.QuoteID)
 
 	err = app.Listen(os.Getenv("SERVER_ADDRESS"))
 	if err != nil {

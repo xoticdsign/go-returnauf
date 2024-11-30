@@ -10,37 +10,37 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-type Database interface {
+type Queuer interface {
 	ListAll() []responses.Quote
 	GetQuote(id string) (responses.Quote, error)
 }
 
-type GormDB struct {
+type Service struct {
 	db *gorm.DB
 }
 
-func RunGORM() (*GormDB, error) {
-	db, err := gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
+func RunGORM() (*Service, error) {
+	gormDB, err := gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, gorm.ErrInvalidDB
 	}
-	return &GormDB{db: db}, nil
+	return &Service{db: gormDB}, nil
 }
 
-func (g *GormDB) ListAll() []responses.Quote {
+func (s *Service) ListAll() []responses.Quote {
 	var quotes []responses.Quote
 
-	g.db.Table("quotes").Find(&quotes)
+	s.db.Table("quotes").Find(&quotes)
 
 	return quotes
 }
 
-func (g *GormDB) GetQuote(id string) (responses.Quote, error) {
+func (s *Service) GetQuote(id string) (responses.Quote, error) {
 	var quote responses.Quote
 
-	tx := g.db.Table("quotes").Where("id=?", id).First(&quote)
+	tx := s.db.Table("quotes").Where("id=?", id).First(&quote)
 	if tx.RowsAffected == 0 {
 		return responses.Quote{}, gorm.ErrRecordNotFound
 	}

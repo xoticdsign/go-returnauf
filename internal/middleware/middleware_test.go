@@ -50,7 +50,7 @@ func Test_authFilter(t *testing.T) {
 			t.Logf("PATH: %s", path)
 			t.Logf("WANT: %v", cs.want)
 
-			got := authFiler(c)
+			got := AuthFiler(c)
 
 			assert.Equalf(t, cs.want, got, "GOT %v, WANT %v", got, cs.want)
 		})
@@ -97,7 +97,7 @@ func Test_keyauthValidator(t *testing.T) {
 			t.Logf("WANT: %v", cs.want)
 			t.Logf("WANT_ERR: %v", cs.wantErr)
 
-			got, gotErr := keyauthValidator(c, cs.input)
+			got, gotErr := KeyauthValidator(c, cs.input)
 
 			assert.Equalf(t, cs.want, got, "GOT %v, WANT %v", got, cs.want)
 			assert.Equalf(t, cs.wantErr, gotErr, "GOT %v, WANT %v", gotErr, cs.wantErr)
