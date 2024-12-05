@@ -1,8 +1,6 @@
 package database
 
 import (
-	"os"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -10,40 +8,58 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
+// Интерфейс, содержащий методы для работы с БД
 type Queuer interface {
-	ListAll() []responses.Quote
+	QuotesCount() (int, error)
+	ListAll() ([]responses.Quote, error)
 	GetQuote(id string) (responses.Quote, error)
 }
 
-type Service struct {
+// Структура, реализующая Queuer
+type DB struct {
 	db *gorm.DB
 }
 
-func RunGORM() (*Service, error) {
-	gormDB, err := gorm.Open(sqlite.Open(os.Getenv("DB_ADDRESS")), &gorm.Config{
+// Запускает SQLite и возвращает структуру, реализующую Queuer
+func RunGORM(dsn string) (*DB, error) {
+	gormDB, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
 		return nil, gorm.ErrInvalidDB
 	}
-	return &Service{db: gormDB}, nil
+	return &DB{db: gormDB}, nil
 }
 
-func (s *Service) ListAll() []responses.Quote {
+// Возвращает количество записей в БД
+func (d *DB) QuotesCount() (int, error) {
 	var quotes []responses.Quote
 
-	s.db.Table("quotes").Find(&quotes)
-
-	return quotes
+	tx := d.db.Table("quotes").Find(&quotes)
+	if tx.RowsAffected == 0 {
+		return 0, gorm.ErrRecordNotFound
+	}
+	return int(tx.RowsAffected), nil
 }
 
-func (s *Service) GetQuote(id string) (responses.Quote, error) {
+// Возвращает все записи в БД
+func (d *DB) ListAll() ([]responses.Quote, error) {
+	var quotes []responses.Quote
+
+	tx := d.db.Table("quotes").Find(&quotes)
+	if tx.RowsAffected == 0 {
+		return nil, gorm.ErrRecordNotFound
+	}
+	return quotes, nil
+}
+
+// Возвращает одну запись из БД по ID
+func (d *DB) GetQuote(id string) (responses.Quote, error) {
 	var quote responses.Quote
 
-	tx := s.db.Table("quotes").Where("id=?", id).First(&quote)
+	tx := d.db.Table("quotes").Where("id=?", id).First(&quote)
 	if tx.RowsAffected == 0 {
 		return responses.Quote{}, gorm.ErrRecordNotFound
 	}
-
 	return quote, nil
 }

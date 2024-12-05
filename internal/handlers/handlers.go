@@ -15,12 +15,33 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-type Dependencies struct {
-	DB     database.Queuer
-	Cache  cache.Cacher
-	Logger logging.Logger
+// Интерфейс, содержащий дополнительные методы хендлеров
+type Supporter interface {
+	RandInt(interval int) (int, string)
 }
 
+// Структура, реализующая Supporter
+type Support struct{}
+
+// Генерирует случайное число
+func (s *Support) RandInt(count int) (int, string) {
+	rand.New(rand.NewSource(time.Now().UnixNano()))
+	randInt := rand.Intn(count)
+
+	id := strconv.Itoa(randInt)
+
+	return randInt, id
+}
+
+// Структура, содержащая интерфейсы для инъекции
+type Dependencies struct {
+	DB      database.Queuer
+	Cache   cache.Cacher
+	Logger  logging.Logger
+	Support Supporter
+}
+
+// Получает контекст и ошибку, а затем форматирует все в JSON
 func (d *Dependencies) Error(c *fiber.Ctx, err error) error {
 	if err == keyauth.ErrMissingOrMalformedAPIKey {
 		d.Logger.Error(fiber.ErrUnauthorized.Message, c)
@@ -34,23 +55,30 @@ func (d *Dependencies) Error(c *fiber.Ctx, err error) error {
 	var e *fiber.Error
 
 	if errors.As(err, &e) {
-		d.Logger.Error(e.Message, c)
+		er, ok := responses.ErrDictionary[e.Code]
+		if !ok {
+			d.Logger.Warn("Необработанная ошибка: "+er.Message, c)
 
-		return c.Status(e.Code).JSON(responses.Error{
-			Code:    e.Code,
-			Message: e.Message,
+			return c.Status(fiber.StatusInternalServerError).JSON(responses.Error{
+				Code:    fiber.StatusInternalServerError,
+				Message: fiber.ErrInternalServerError.Message,
+			})
+		}
+		d.Logger.Error(er.Message, c)
+
+		return c.Status(er.Code).JSON(responses.Error{
+			Code:    er.Code,
+			Message: er.Message,
 		})
 	}
-	d.Logger.Error(err.Error(), c)
+	d.Logger.Error(fiber.ErrInternalServerError.Message, c)
 
 	return c.Status(fiber.StatusInternalServerError).JSON(responses.Error{
 		Code:    fiber.StatusInternalServerError,
-		Message: err.Error(),
+		Message: fiber.ErrInternalServerError.Message,
 	})
 }
 
-// List all quotes
-//
 // @description Возвращает полный список цитат, хранящихся в базе данных. Полезно для получения всех доступных данных для анализа, отображения или других операций. Цитаты возвращаются в формате JSON.
 //
 // @id          list-all
@@ -59,22 +87,24 @@ func (d *Dependencies) Error(c *fiber.Ctx, err error) error {
 // @summary     Предоставляет все цитаты
 // @produce     json
 // @security    KeyAuth
-// @success     200 {object} responses.Quote Стандартный ответ
-// @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
-// @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
+// @success     200 {object} responses.Quote
+// @failure     401 {object} responses.Error
+// @failure     404 {object} responses.Error
+// @failure     405 {object} responses.Error
+// @failure     500 {object} responses.Error
 // @router      / [get]
 func (d *Dependencies) ListAll(c *fiber.Ctx) error {
 	d.Logger.Info("Обращение к базе данных", c)
 
-	quotes := d.DB.ListAll()
-
+	quotes, err := d.DB.ListAll()
+	if err != nil {
+		return fiber.ErrNotFound
+	}
 	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(quotes)
 }
 
-// Random quote
-//
 // @description Возвращает случайную цитату из базы данных. Если цитата отсутствует в кэше, то она извлекается из базы данных, добавляется в кэш и возвращается пользователю. Позволяет отображать динамическое содержимое, не перегружая базу данных. Случайность обеспечивается генератором случайных чисел.
 //
 // @id          random-quote
@@ -83,75 +113,24 @@ func (d *Dependencies) ListAll(c *fiber.Ctx) error {
 // @summary     Предоставляет случайную цитату
 // @produce     json
 // @security    KeyAuth
-// @success     200 {object} responses.Quote Стандартный ответ
-// @failure     401 {object} responses.Error Происходит, если не        был            предоставлен ключ API
-// @failure     500 {object} responses.Error Происходит, если произошла неопределенная ошибка
+// @success     200 {object} responses.Quote
+// @failure     401 {object} responses.Error
+// @failure     404 {object} responses.Error
+// @failure     405 {object} responses.Error
+// @failure     500 {object} responses.Error
 // @router      /random [get]
 func (d *Dependencies) RandomQuote(c *fiber.Ctx) error {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-	randInt := rand.Intn(201)
-
-	id := strconv.Itoa(randInt)
-
-	quote, errStr := d.Cache.Get(id)
-	if errStr == "Failed" {
-		d.Logger.Error("Не удалось достать кэш", c)
-	}
-	if errStr == "Nil" {
-		d.Logger.Warn("Кэш отсутствует", c)
-		d.Logger.Info("Обращение к базе данных", c)
-
-		quote, _ := d.DB.GetQuote(id)
-
-		err := d.Cache.Set(id, quote.Quote, time.Minute*1)
-		if err != nil {
-			d.Logger.Error("Не удалось кэшировать данные", c)
-		}
-
-		d.Logger.Info("Данные добавлены в кэш", c)
-		d.Logger.Info("Обработан запрос", c)
-
-		return c.JSON(quote)
-	}
-
-	d.Logger.Info("Данные получены из кэша", c)
-	d.Logger.Info("Обработан запрос", c)
-
-	return c.JSON(responses.Quote{
-		ID:    randInt,
-		Quote: quote,
-	})
-}
-
-// Quote by ID
-//
-// @description Возвращает цитату по её уникальному идентификатору (ID). Если цитата не найдена в кэше, происходит обращение к базе данных. Полученная цитата затем сохраняется в кэш для ускорения последующих запросов. Если запрошенного ID нет в базе данных, возвращается ошибка.
-//
-// @id          quote-id
-// @tags        Операции с цитатами
-//
-// @summary     Предоставляет цитату по заданному ID
-// @produce     json
-// @param       id path string false "Позволяет указать ID цитаты" example(105)
-// @security    KeyAuth
-// @success     200 {object} responses.Quote Стандартный ответ
-// @failure     401 {object} responses.Error Происходит, если не            был            предоставлен ключ API
-// @failure     404 {object} responses.Error Происходит, если запрашиваемой цитаты         не           существует
-// @failure     500 {object} responses.Error Происходит, если произошла     неопределенная ошибка
-// @router      /{id} [get]
-func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
-	id := c.Params("id")
-
-	idInt, err := strconv.Atoi(id)
+	count, err := d.DB.QuotesCount()
 	if err != nil {
 		return fiber.ErrNotFound
 	}
 
-	quote, errStr := d.Cache.Get(id)
-	if errStr == "Failed" {
+	idInt, id := d.Support.RandInt(count)
+
+	quote, err := d.Cache.Get(id)
+	if err != nil {
 		d.Logger.Error("Не удалось достать кэш", c)
-	}
-	if errStr == "Nil" {
+
 		d.Logger.Warn("Кэш отсутствует", c)
 		d.Logger.Info("Обращение к базе данных", c)
 
@@ -170,7 +149,60 @@ func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
 
 		return c.JSON(quote)
 	}
+	d.Logger.Info("Данные получены из кэша", c)
+	d.Logger.Info("Обработан запрос", c)
 
+	return c.JSON(responses.Quote{
+		ID:    idInt,
+		Quote: quote,
+	})
+}
+
+// @description Возвращает цитату по её уникальному идентификатору (ID). Если цитата не найдена в кэше, происходит обращение к базе данных. Полученная цитата затем сохраняется в кэш для ускорения последующих запросов. Если запрошенного ID нет в базе данных, возвращается ошибка.
+//
+// @id          quote-id
+// @tags        Операции с цитатами
+//
+// @summary     Предоставляет цитату по заданному ID
+// @produce     json
+// @param       id path string false "Позволяет указать ID цитаты" example(105)
+// @security    KeyAuth
+// @success     200 {object} responses.Quote
+// @failure     401 {object} responses.Error
+// @failure     404 {object} responses.Error
+// @failure     405 {object} responses.Error
+// @failure     500 {object} responses.Error
+// @router      /{id} [get]
+func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		return fiber.ErrNotFound
+	}
+
+	quote, err := d.Cache.Get(id)
+	if err != nil {
+		d.Logger.Error("Не удалось достать кэш", c)
+
+		d.Logger.Warn("Кэш отсутствует", c)
+		d.Logger.Info("Обращение к базе данных", c)
+
+		quote, err := d.DB.GetQuote(id)
+		if err != nil {
+			return fiber.ErrNotFound
+		}
+
+		err = d.Cache.Set(id, quote.Quote, time.Minute*1)
+		if err != nil {
+			d.Logger.Error("Не удалось кэшировать данные", c)
+		}
+
+		d.Logger.Info("Данные добавлены в кэш", c)
+		d.Logger.Info("Обработан запрос", c)
+
+		return c.JSON(quote)
+	}
 	d.Logger.Info("Данные получены из кэша", c)
 	d.Logger.Info("Обработан запрос", c)
 

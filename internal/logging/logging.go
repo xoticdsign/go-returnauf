@@ -7,17 +7,20 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+// Интерфейс, содержащий методы для работы с Логгером
 type Logger interface {
 	Info(message string, c *fiber.Ctx)
 	Warn(message string, c *fiber.Ctx)
 	Error(message string, c *fiber.Ctx)
 }
 
-type Service struct {
+// Структура, реализующая Logger
+type Log struct {
 	logger *zap.Logger
 }
 
-func RunZap() (*Service, error) {
+// Запускает Zap и возвращает структуру, реализующую Logger
+func RunZap() (*Log, error) {
 	config := zap.Config{
 		Level:    zap.NewAtomicLevelAt(zap.InfoLevel),
 		Encoding: "console",
@@ -37,27 +40,30 @@ func RunZap() (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{logger: zap}, nil
+	return &Log{logger: zap}, nil
 }
 
-func (s *Service) Info(message string, c *fiber.Ctx) {
-	s.logger.Info(
+// Создает информационный лог
+func (l *Log) Info(message string, c *fiber.Ctx) {
+	l.logger.Info(
 		message,
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),
 	)
 }
 
-func (s *Service) Warn(message string, c *fiber.Ctx) {
-	s.logger.Warn(
+// Создает лог-предупреждение
+func (l *Log) Warn(message string, c *fiber.Ctx) {
+	l.logger.Warn(
 		message,
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),
 	)
 }
 
-func (s *Service) Error(message string, c *fiber.Ctx) {
-	s.logger.Error(
+// Создает лог-ошибку
+func (l *Log) Error(message string, c *fiber.Ctx) {
+	l.logger.Error(
 		message,
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),

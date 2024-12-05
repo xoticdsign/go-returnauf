@@ -19,24 +19,24 @@ import (
 	"github.com/xoticdsign/auf-citaty/internal/middleware"
 )
 
-// General description
+// Общее описание
 //
-//	@title						Auf Citaty API
-//	@version					1.0.0
-//	@description				TODO
-//	@contact.name				xoti$
-//	@contact.url				https://t.me/xoticdsign
-//	@contact.email				xoticdollarsign@outlook.com
-//	@license.name				MIT
-//	@license.url				https://mit-license.org/
-//	@host						127.0.0.1:8080
-//	@BasePath					/
-//	@produce					json
-//	@schemes					http
+// @title                      Auf Citaty API
+// @version                    1.0.0
+// @description                TODO
+// @contact.name               xoti$
+// @contact.url                https://t.me/xoticdsign
+// @contact.email              xoticdollarsign@outlook.com
+// @license.name               MIT
+// @license.url                https://mit-license.org/
+// @host                       127.0.0.1:8080
+// @BasePath                   /
+// @produce                    json
+// @schemes                    http
 //
-//	@securitydefinitions.apikey	KeyAuth
-//	@in							query
-//	@name						auf-citaty-key
+// @securitydefinitions.apikey KeyAuth
+// @in                         query
+// @name                       auf-citaty-key
 func main() {
 	godotenv.Load()
 
@@ -50,7 +50,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := database.RunGORM()
+	dsn := os.Getenv("DB_ADDRESS")
+
+	db, err := database.RunGORM(dsn)
 	if err != nil {
 		log.Fatal(err)
 	}

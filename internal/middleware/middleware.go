@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// Фильтрует маршруты для аутентификации
 func AuthFiler(c *fiber.Ctx) bool {
 	path := c.Path()
 	if strings.Contains(path, "swagger") {
@@ -17,6 +18,7 @@ func AuthFiler(c *fiber.Ctx) bool {
 	return false
 }
 
+// Проверяет ключ API
 func KeyauthValidator(c *fiber.Ctx, key string) (bool, error) {
 	apiKey := os.Getenv("AUF_CITATY_KEY")
 

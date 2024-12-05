@@ -8,16 +8,19 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
+// Интерфейс, содержащий методы для работы с Кэшом
 type Cacher interface {
 	Set(key string, value interface{}, expiration time.Duration) error
-	Get(key string) (string, string)
+	Get(key string) (string, error)
 }
 
-type Service struct {
+// Структура, реализующая Cacher
+type Cache struct {
 	cache *redis.Client
 }
 
-func RunRedis() (*Service, error) {
+// Запускает Redis и возвращает структуру, реализующую Cacher
+func RunRedis() (*Cache, error) {
 	config := redis.Options{
 		Addr:     os.Getenv("REDIS_ADDRESS"),
 		Password: os.Getenv("REDIS_PASSWORD"),
@@ -29,24 +32,26 @@ func RunRedis() (*Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Service{cache: redis}, nil
+	return &Cache{cache: redis}, nil
 }
 
-func (s *Service) Set(key string, value interface{}, expiration time.Duration) error {
-	status := s.cache.Set(context.Background(), key, value, expiration)
+// Сохраняет данные в Кэш
+func (c *Cache) Set(key string, value interface{}, expiration time.Duration) error {
+	status := c.cache.Set(context.Background(), key, value, expiration)
 	if status.Err() != nil {
-		return status.Err()
+		return redis.TxFailedErr
 	}
 	return nil
 }
 
-func (s *Service) Get(key string) (string, string) {
-	quote, err := s.cache.Get(context.Background(), key).Result()
+// Находит данные в Кэше
+func (c *Cache) Get(key string) (string, error) {
+	quote, err := c.cache.Get(context.Background(), key).Result()
 	if err == redis.TxFailedErr {
-		return "", "Failed"
+		return "", redis.TxFailedErr
 	}
 	if err == redis.Nil {
-		return "", "Nil"
+		return "", redis.Nil
 	}
-	return quote, ""
+	return quote, nil
 }
