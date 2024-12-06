@@ -21,8 +21,8 @@ type DB struct {
 }
 
 // Запускает SQLite и возвращает структуру, реализующую Queuer
-func RunGORM(dsn string) (*DB, error) {
-	gormDB, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+func RunGORM(dbAddr string) (*DB, error) {
+	gormDB, err := gorm.Open(sqlite.Open(dbAddr), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {

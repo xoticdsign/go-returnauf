@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/xoticdsign/auf-citaty/models/responses"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
 // Массив с цитатами для тестов
@@ -22,7 +23,7 @@ var quotes = []responses.Quote{
 func setup(emptyDB bool) *DB {
 	DB, _ := RunGORM("db_test.sqlite")
 
-	if emptyDB == false {
+	if !emptyDB {
 		DB.db.AutoMigrate(&responses.Quote{})
 		DB.db.Table("quotes").Create(&quotes)
 	}
@@ -47,13 +48,15 @@ func TestUnitRunGORM(t *testing.T) {
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
 			gotDB, gotErr := RunGORM("db_test.sqlite")
-			sqlDB, _ := gotDB.db.DB()
-			defer sqlDB.Close()
+			if gotErr != nil {
+				assert.Equalf(t, cs.wantRunGORMToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantRunGORMToReturnErr)
+			} else {
+				gotLogger := gotDB.db.Config.Logger
+				sqlDB, _ := gotDB.db.DB()
+				defer sqlDB.Close()
 
-			gotLogger := gotDB.db.Config.Logger
-
-			assert.Equalf(t, cs.wantLoggerToBe, gotLogger, "got %v, while comparing logger from the config, want %v", gotLogger, cs.wantLoggerToBe)
-			assert.Equalf(t, cs.wantRunGORMToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantRunGORMToReturnErr)
+				assert.Equalf(t, cs.wantLoggerToBe, gotLogger, "got %v, while comparing logger from the config, want %v", gotLogger, cs.wantLoggerToBe)
+			}
 
 			defer os.Remove("db_test.sqlite")
 		})
@@ -85,14 +88,15 @@ func TestUnitQuotesCount(t *testing.T) {
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
 			DB := setup(cs.emptyDB)
-
 			sqlDB, _ := DB.db.DB()
 			defer sqlDB.Close()
 
 			gotCount, gotErr := DB.QuotesCount()
-
-			assert.Equalf(t, cs.wantQuotesCountToReturnCount, gotCount, "got %v, while comparing returned count, want %v", gotCount, cs.wantQuotesCountToReturnCount)
-			assert.Equalf(t, cs.wantQuotesCountToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantQuotesCountToReturnErr)
+			if gotErr != nil {
+				assert.Equalf(t, cs.wantQuotesCountToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantQuotesCountToReturnErr)
+			} else {
+				assert.Equalf(t, cs.wantQuotesCountToReturnCount, gotCount, "got %v, while comparing returned count, want %v", gotCount, cs.wantQuotesCountToReturnCount)
+			}
 
 			defer os.Remove("db_test.sqlite")
 		})
@@ -124,14 +128,15 @@ func TestUnitListAll(t *testing.T) {
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
 			DB := setup(cs.emptyDB)
-
 			sqlDB, _ := DB.db.DB()
 			defer sqlDB.Close()
 
 			gotQuotes, gotErr := DB.ListAll()
-
-			assert.Equalf(t, cs.wantListAllToReturnQuotes, gotQuotes, "got %v, while comparing returned quotes, want %v", gotQuotes, cs.wantListAllToReturnQuotes)
-			assert.Equalf(t, cs.wantListAllToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantListAllToReturnErr)
+			if gotErr != nil {
+				assert.Equalf(t, cs.wantListAllToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantListAllToReturnErr)
+			} else {
+				assert.Equalf(t, cs.wantListAllToReturnQuotes, gotQuotes, "got %v, while comparing returned quotes, want %v", gotQuotes, cs.wantListAllToReturnQuotes)
+			}
 
 			defer os.Remove("db_test.sqlite")
 		})
@@ -165,14 +170,15 @@ func TestUnitGetQuote(t *testing.T) {
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
 			DB := setup(cs.emptyDB)
-
 			sqlDB, _ := DB.db.DB()
 			defer sqlDB.Close()
 
 			gotQuote, gotErr := DB.GetQuote(cs.input)
-
-			assert.Equalf(t, cs.wantGetQuoteToReturnQuote, gotQuote, "got %v, while comparing returned quote, want %v", gotQuote, cs.wantGetQuoteToReturnQuote)
-			assert.Equalf(t, cs.wantGetQuoteToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantGetQuoteToReturnErr)
+			if gotErr != nil {
+				assert.Equalf(t, cs.wantGetQuoteToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantGetQuoteToReturnErr)
+			} else {
+				assert.Equalf(t, cs.wantGetQuoteToReturnQuote, gotQuote, "got %v, while comparing returned quote, want %v", gotQuote, cs.wantGetQuoteToReturnQuote)
+			}
 
 			defer os.Remove("db_test.sqlite")
 		})

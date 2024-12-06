@@ -40,7 +40,12 @@ import (
 func main() {
 	godotenv.Load()
 
-	cache, err := cache.RunRedis()
+	serverAddr := os.Getenv("SERVER_ADDRESS")
+	redisAddr := os.Getenv("REDIS_ADDRESS")
+	redisPassword := os.Getenv("REDIS_PASSWORD")
+	dbAddr := os.Getenv("DB_ADDRESS")
+
+	cache, err := cache.RunRedis(redisAddr, redisPassword)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,9 +55,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	dsn := os.Getenv("DB_ADDRESS")
-
-	db, err := database.RunGORM(dsn)
+	db, err := database.RunGORM(dbAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -86,7 +89,7 @@ func main() {
 	app.Get("/random", dependencies.RandomQuote)
 	app.Get("/:id", dependencies.QuoteID)
 
-	err = app.Listen(os.Getenv("SERVER_ADDRESS"))
+	err = app.Listen(serverAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
