@@ -3,10 +3,10 @@ package middleware
 import (
 	"crypto/sha256"
 	"crypto/subtle"
-	"os"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/xoticdsign/auf-citaty/config"
 )
 
 // Фильтрует маршруты для аутентификации
@@ -20,7 +20,7 @@ func AuthFiler(c *fiber.Ctx) bool {
 
 // Проверяет ключ API
 func KeyauthValidator(c *fiber.Ctx, key string) (bool, error) {
-	apiKey := os.Getenv("AUF_CITATY_KEY")
+	apiKey := config.LoadConfig().ApiKey
 
 	hRealKey := sha256.Sum256([]byte(apiKey))
 	hKey := sha256.Sum256([]byte(key))

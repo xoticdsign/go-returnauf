@@ -12,20 +12,13 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-// Массив с цитатами для тестов
-var quotes = []responses.Quote{
-	{ID: 1, Quote: "Mock quote 1"},
-	{ID: 2, Quote: "Mock quote 2"},
-	{ID: 3, Quote: "Mock quote 3"},
-}
-
 // Настройка GORM для тестов
 func setup(emptyDB bool) *DB {
 	DB, _ := RunGORM("db_test.sqlite")
 
 	if !emptyDB {
 		DB.db.AutoMigrate(&responses.Quote{})
-		DB.db.Table("quotes").Create(&quotes)
+		DB.db.Table("quotes").Create(&responses.TestQuotes)
 	}
 
 	return DB
@@ -74,7 +67,7 @@ func TestUnitQuotesCount(t *testing.T) {
 		{
 			name:                         "general case",
 			emptyDB:                      false,
-			wantQuotesCountToReturnCount: len(quotes),
+			wantQuotesCountToReturnCount: len(responses.TestQuotes),
 			wantQuotesCountToReturnErr:   nil,
 		},
 		{
@@ -114,7 +107,7 @@ func TestUnitListAll(t *testing.T) {
 		{
 			name:                      "general case",
 			emptyDB:                   false,
-			wantListAllToReturnQuotes: quotes,
+			wantListAllToReturnQuotes: responses.TestQuotes,
 			wantListAllToReturnErr:    nil,
 		},
 		{
@@ -156,7 +149,7 @@ func TestUnitGetQuote(t *testing.T) {
 			name:                      "general case",
 			input:                     "1",
 			emptyDB:                   false,
-			wantGetQuoteToReturnQuote: quotes[0],
+			wantGetQuoteToReturnQuote: responses.TestQuotes[0],
 			wantGetQuoteToReturnErr:   nil,
 		},
 		{

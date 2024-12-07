@@ -35,3 +35,15 @@ var ErrDictionary = map[int]Error{
 		Message: fiber.ErrInternalServerError.Message,
 	},
 }
+
+var TestQuotes = []Quote{
+	{ID: 1, Quote: "Mock quote 1"},
+	{ID: 2, Quote: "Mock quote 2"},
+	{ID: 3, Quote: "Mock quote 3"},
+}
+
+var TestQuotesForHandlers = []Quote{
+	{ID: 0, Quote: "Mock quote 0"},
+	{ID: 1, Quote: "Mock quote 1"},
+	{ID: 2, Quote: "Mock quote 2"},
+}

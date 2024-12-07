@@ -3,16 +3,16 @@ services:
     build: ./
     image: auf-citaty
     container_name: server
-    command: ./auf-citaty
+    command: ./app
     environment:
       SERVER_ADDRESS: ${SERVER_ADDRESS}
       REDIS_ADDRESS: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       DB_ADDRESS: db.sqlite
-      AUF_CITATY_KEY: ${AUF_CITATY_KEY}
+      API_KEY: ${API_KEY}
     restart: on-failure:5
     networks:
-      - auf-citaty-network
+      - app-network
     ports:
       - 8080:8080
     depends_on:
@@ -23,10 +23,10 @@ services:
     container_name: redis
     restart: on-failure:5
     networks:
-      - auf-citaty-network
+      - app-network
     ports:
       - "6379:6379"
 
 networks:
-  auf-citaty-network:
+  app-network:
     

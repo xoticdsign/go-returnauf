@@ -15,13 +15,6 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-// Массив с цитатами для тестов
-var quotes = []responses.Quote{
-	{ID: 0, Quote: "Mock quote 0"},
-	{ID: 1, Quote: "Mock quote 1"},
-	{ID: 2, Quote: "Mock quote 2"},
-}
-
 // Настройка Fiber для тестов
 func setup(dependencies Dependencies) *fiber.App {
 	mockApp := fiber.New(fiber.Config{
@@ -110,40 +103,6 @@ func (m *MockSupport) RandInt(count int) (int, string) {
 	return 1, "1"
 }
 
-// Unit тест для функции RandInt
-func TestUnitRandInt(t *testing.T) {
-	cases := []struct {
-		name  string
-		input int
-	}{
-		{
-			name:  "general case",
-			input: 40,
-		},
-	}
-
-	for _, cs := range cases {
-		t.Run(cs.name, func(t *testing.T) {
-			mockSupport := new(Support)
-
-			var gotInts []int
-			var gotStrs []string
-
-			for x := 0; x < 5; x++ {
-				gotInt, gotStr := mockSupport.RandInt(cs.input)
-
-				gotInts = append(gotInts, gotInt)
-				gotStrs = append(gotStrs, gotStr)
-
-				if x < 0 {
-					assert.NotEqualf(t, gotInt, gotInts[x-1], "got %v, while comparing newly generated int with the previous one, want %v", gotInt, gotInts[x-1])
-					assert.NotEqualf(t, gotStr, gotStrs[x-1], "got %v, while comparing newly generated string with the previous one, want %v", gotStr, gotStrs[x-1])
-				}
-			}
-		})
-	}
-}
-
 // Unit тест для хендлера ListAll
 func TestUnitListAll(t *testing.T) {
 	cases := []struct {
@@ -158,7 +117,7 @@ func TestUnitListAll(t *testing.T) {
 			method:                 "GET",
 			path:                   "/",
 			wantListAllToReturnErr: nil,
-			wantBodyToBe:           quotes,
+			wantBodyToBe:           responses.TestQuotesForHandlers,
 		},
 		{
 			name:                   "wrong path case",
@@ -193,7 +152,7 @@ func TestUnitListAll(t *testing.T) {
 				Logger: mockLogger,
 			}
 
-			mockDB.On("ListAll").Return(quotes, cs.wantListAllToReturnErr)
+			mockDB.On("ListAll").Return(responses.TestQuotesForHandlers, cs.wantListAllToReturnErr)
 
 			mockLogger.On("Info", mock.Anything, mock.Anything)
 			mockLogger.On("Warn", mock.Anything, mock.Anything)
@@ -239,7 +198,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			wantCacheSetToReturnErr:    nil,
 			wantCacheGetToReturnQuote:  false,
 			wantCacheGetToReturnErr:    errors.New("error"),
-			wantBodyToBe:               quotes[1],
+			wantBodyToBe:               responses.TestQuotesForHandlers[1],
 		},
 		{
 			name:                       "quote from cache case",
@@ -250,7 +209,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			wantCacheSetToReturnErr:    nil,
 			wantCacheGetToReturnQuote:  true,
 			wantCacheGetToReturnErr:    nil,
-			wantBodyToBe:               quotes[1],
+			wantBodyToBe:               responses.TestQuotesForHandlers[1],
 		},
 		{
 			name:                       "wrong path case",
@@ -294,7 +253,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			wantCacheSetToReturnErr:    errors.New("error"),
 			wantCacheGetToReturnQuote:  false,
 			wantCacheGetToReturnErr:    errors.New("error"),
-			wantBodyToBe:               quotes[1],
+			wantBodyToBe:               responses.TestQuotesForHandlers[1],
 		},
 	}
 
@@ -312,11 +271,11 @@ func TestUnitRandomQuote(t *testing.T) {
 				Support: mockSupport,
 			}
 
-			mockDB.On("QuotesCount").Return(len(quotes), cs.wantQuotesCountToReturnErr)
-			mockDB.On("GetQuote", mock.Anything).Return(quotes[1], cs.wantGetQuoteToReturnErr)
+			mockDB.On("QuotesCount").Return(len(responses.TestQuotesForHandlers), cs.wantQuotesCountToReturnErr)
+			mockDB.On("GetQuote", mock.Anything).Return(responses.TestQuotesForHandlers[1], cs.wantGetQuoteToReturnErr)
 
 			mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(cs.wantCacheSetToReturnErr)
-			mockCache.On("Get", mock.Anything).Return(quotes[1].Quote, cs.wantCacheGetToReturnErr)
+			mockCache.On("Get", mock.Anything).Return(responses.TestQuotesForHandlers[1].Quote, cs.wantCacheGetToReturnErr)
 
 			mockLogger.On("Info", mock.Anything, mock.Anything)
 			mockLogger.On("Warn", mock.Anything, mock.Anything)
@@ -360,7 +319,7 @@ func TestUnitQuoteID(t *testing.T) {
 			wantCacheSetToReturnErr:   nil,
 			wantCacheGetToReturnQuote: false,
 			wantCacheGetToReturnErr:   errors.New("error"),
-			wantBodyToBe:              quotes[1],
+			wantBodyToBe:              responses.TestQuotesForHandlers[1],
 		},
 		{
 			name:                      "quote from cache case",
@@ -370,7 +329,7 @@ func TestUnitQuoteID(t *testing.T) {
 			wantCacheSetToReturnErr:   nil,
 			wantCacheGetToReturnQuote: true,
 			wantCacheGetToReturnErr:   nil,
-			wantBodyToBe:              quotes[1],
+			wantBodyToBe:              responses.TestQuotesForHandlers[1],
 		},
 		{
 			name:                      "wrong path case",
@@ -410,7 +369,7 @@ func TestUnitQuoteID(t *testing.T) {
 			wantCacheSetToReturnErr:   errors.New("error"),
 			wantCacheGetToReturnQuote: false,
 			wantCacheGetToReturnErr:   errors.New("error"),
-			wantBodyToBe:              quotes[1],
+			wantBodyToBe:              responses.TestQuotesForHandlers[1],
 		},
 	}
 
@@ -426,10 +385,10 @@ func TestUnitQuoteID(t *testing.T) {
 				Logger: mockLogger,
 			}
 
-			mockDB.On("GetQuote", mock.Anything).Return(quotes[1], cs.wantGetQuoteToReturnErr)
+			mockDB.On("GetQuote", mock.Anything).Return(responses.TestQuotesForHandlers[1], cs.wantGetQuoteToReturnErr)
 
 			mockCache.On("Set", mock.Anything, mock.Anything, mock.Anything).Return(cs.wantCacheSetToReturnErr)
-			mockCache.On("Get", mock.Anything).Return(quotes[1].Quote, cs.wantCacheGetToReturnErr)
+			mockCache.On("Get", mock.Anything).Return(responses.TestQuotesForHandlers[1].Quote, cs.wantCacheGetToReturnErr)
 
 			mockLogger.On("Info", mock.Anything, mock.Anything)
 			mockLogger.On("Warn", mock.Anything, mock.Anything)

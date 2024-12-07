@@ -2,21 +2,12 @@ package main
 
 import (
 	"log"
-	"os"
-	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/favicon"
-	"github.com/gofiber/fiber/v2/middleware/keyauth"
-	"github.com/gofiber/swagger"
 	"github.com/joho/godotenv"
 
+	"github.com/xoticdsign/auf-citaty/config"
 	_ "github.com/xoticdsign/auf-citaty/docs"
-	"github.com/xoticdsign/auf-citaty/internal/cache"
-	"github.com/xoticdsign/auf-citaty/internal/database"
-	"github.com/xoticdsign/auf-citaty/internal/handlers"
-	"github.com/xoticdsign/auf-citaty/internal/logging"
-	"github.com/xoticdsign/auf-citaty/internal/middleware"
+	"github.com/xoticdsign/auf-citaty/internal/app"
 )
 
 // Общее описание
@@ -40,56 +31,14 @@ import (
 func main() {
 	godotenv.Load()
 
-	serverAddr := os.Getenv("SERVER_ADDRESS")
-	redisAddr := os.Getenv("REDIS_ADDRESS")
-	redisPassword := os.Getenv("REDIS_PASSWORD")
-	dbAddr := os.Getenv("DB_ADDRESS")
+	conf := config.LoadConfig()
 
-	cache, err := cache.RunRedis(redisAddr, redisPassword)
+	app, err := app.InitApp(conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	logger, err := logging.RunZap()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db, err := database.RunGORM(dbAddr)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	dependencies := &handlers.Dependencies{
-		DB:     db,
-		Cache:  cache,
-		Logger: logger,
-	}
-
-	app := fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty",
-		StrictRouting: true,
-		CaseSensitive: true,
-		ReadTimeout:   time.Second * 20,
-		WriteTimeout:  time.Second * 20,
-		ErrorHandler:  dependencies.Error,
-		AppName:       "auf-citaty",
-	})
-
-	app.Use(favicon.New(favicon.ConfigDefault))
-	app.Use(keyauth.New(keyauth.Config{
-		Next:         middleware.AuthFiler,
-		ErrorHandler: dependencies.Error,
-		KeyLookup:    "query:auf-citaty-key",
-		Validator:    middleware.KeyauthValidator,
-	}))
-
-	app.Get("/swagger/*", swagger.HandlerDefault)
-	app.Get("/", dependencies.ListAll)
-	app.Get("/random", dependencies.RandomQuote)
-	app.Get("/:id", dependencies.QuoteID)
-
-	err = app.Listen(serverAddr)
+	err = app.Listen(conf.ServerAddr)
 	if err != nil {
 		log.Fatal(err)
 	}

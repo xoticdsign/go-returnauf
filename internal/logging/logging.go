@@ -47,6 +47,7 @@ func RunZap() (*Log, error) {
 func (l *Log) Info(message string, c *fiber.Ctx) {
 	l.logger.Info(
 		message,
+		zap.String("UUID", c.Locals("uuid").(string)),
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),
 	)
@@ -56,6 +57,7 @@ func (l *Log) Info(message string, c *fiber.Ctx) {
 func (l *Log) Warn(message string, c *fiber.Ctx) {
 	l.logger.Warn(
 		message,
+		zap.String("UUID", c.Locals("uuid").(string)),
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),
 	)
@@ -65,6 +67,7 @@ func (l *Log) Warn(message string, c *fiber.Ctx) {
 func (l *Log) Error(message string, c *fiber.Ctx) {
 	l.logger.Error(
 		message,
+		zap.String("UUID", c.Locals("uuid").(string)),
 		zap.String("Method", c.Method()),
 		zap.String("Path", c.Path()),
 	)

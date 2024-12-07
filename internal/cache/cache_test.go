@@ -20,19 +20,12 @@ import (
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
-// Массив с цитатами для тестов
-var quotes = []responses.Quote{
-	{ID: 1, Quote: "Mock quote 1"},
-	{ID: 2, Quote: "Mock quote 2"},
-	{ID: 3, Quote: "Mock quote 3"},
-}
-
 // Настройка Redis для тестов
 func setup(emptyCache bool) *Cache {
 	Cache, _ := RunRedis("127.0.0.1:6379", "")
 
 	if !emptyCache {
-		for _, quote := range quotes {
+		for _, quote := range responses.TestQuotes {
 			Cache.cache.Set(context.Background(), strconv.Itoa(quote.ID), quote.Quote, time.Duration(time.Minute*5))
 		}
 	}

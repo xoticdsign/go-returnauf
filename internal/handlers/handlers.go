@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"math/rand"
 	"strconv"
 	"time"
 
@@ -12,33 +11,16 @@ import (
 	"github.com/xoticdsign/auf-citaty/internal/cache"
 	"github.com/xoticdsign/auf-citaty/internal/database"
 	"github.com/xoticdsign/auf-citaty/internal/logging"
+	"github.com/xoticdsign/auf-citaty/internal/utils"
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
-
-// Интерфейс, содержащий дополнительные методы хендлеров
-type Supporter interface {
-	RandInt(interval int) (int, string)
-}
-
-// Структура, реализующая Supporter
-type Support struct{}
-
-// Генерирует случайное число
-func (s *Support) RandInt(count int) (int, string) {
-	rand.New(rand.NewSource(time.Now().UnixNano()))
-	randInt := rand.Intn(count)
-
-	id := strconv.Itoa(randInt)
-
-	return randInt, id
-}
 
 // Структура, содержащая интерфейсы для инъекции
 type Dependencies struct {
 	DB      database.Queuer
 	Cache   cache.Cacher
 	Logger  logging.Logger
-	Support Supporter
+	Support utils.Supporter
 }
 
 // Получает контекст и ошибку, а затем форматирует все в JSON
@@ -94,8 +76,6 @@ func (d *Dependencies) Error(c *fiber.Ctx, err error) error {
 // @failure     500 {object} responses.Error
 // @router      / [get]
 func (d *Dependencies) ListAll(c *fiber.Ctx) error {
-	d.Logger.Info("Обращение к базе данных", c)
-
 	quotes, err := d.DB.ListAll()
 	if err != nil {
 		return fiber.ErrNotFound
@@ -129,11 +109,6 @@ func (d *Dependencies) RandomQuote(c *fiber.Ctx) error {
 
 	quote, err := d.Cache.Get(id)
 	if err != nil {
-		d.Logger.Error("Не удалось достать кэш", c)
-
-		d.Logger.Warn("Кэш отсутствует", c)
-		d.Logger.Info("Обращение к базе данных", c)
-
 		quote, err := d.DB.GetQuote(id)
 		if err != nil {
 			return fiber.ErrNotFound
@@ -143,13 +118,10 @@ func (d *Dependencies) RandomQuote(c *fiber.Ctx) error {
 		if err != nil {
 			d.Logger.Error("Не удалось кэшировать данные", c)
 		}
-
-		d.Logger.Info("Данные добавлены в кэш", c)
 		d.Logger.Info("Обработан запрос", c)
 
 		return c.JSON(quote)
 	}
-	d.Logger.Info("Данные получены из кэша", c)
 	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(responses.Quote{
@@ -183,11 +155,6 @@ func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
 
 	quote, err := d.Cache.Get(id)
 	if err != nil {
-		d.Logger.Error("Не удалось достать кэш", c)
-
-		d.Logger.Warn("Кэш отсутствует", c)
-		d.Logger.Info("Обращение к базе данных", c)
-
 		quote, err := d.DB.GetQuote(id)
 		if err != nil {
 			return fiber.ErrNotFound
@@ -197,13 +164,10 @@ func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
 		if err != nil {
 			d.Logger.Error("Не удалось кэшировать данные", c)
 		}
-
-		d.Logger.Info("Данные добавлены в кэш", c)
 		d.Logger.Info("Обработан запрос", c)
 
 		return c.JSON(quote)
 	}
-	d.Logger.Info("Данные получены из кэша", c)
 	d.Logger.Info("Обработан запрос", c)
 
 	return c.JSON(responses.Quote{
