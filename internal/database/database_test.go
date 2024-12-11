@@ -13,12 +13,11 @@ import (
 )
 
 // Настройка GORM для тестов
-func setup(emptyDB bool) *DB {
+func setupTestDB(emptyDB bool) *DB {
 	DB, _ := RunGORM("db_test.sqlite")
 
 	if !emptyDB {
-		DB.db.AutoMigrate(&responses.Quote{})
-		DB.db.Table("quotes").Create(&responses.TestQuotes)
+		DB.MigrateQuotes()
 	}
 
 	return DB
@@ -80,9 +79,8 @@ func TestUnitQuotesCount(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			DB := setup(cs.emptyDB)
-			sqlDB, _ := DB.db.DB()
-			defer sqlDB.Close()
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
 
 			gotCount, gotErr := DB.QuotesCount()
 			if gotErr != nil {
@@ -90,8 +88,6 @@ func TestUnitQuotesCount(t *testing.T) {
 			} else {
 				assert.Equalf(t, cs.wantQuotesCountToReturnCount, gotCount, "got %v, while comparing returned count, want %v", gotCount, cs.wantQuotesCountToReturnCount)
 			}
-
-			defer os.Remove("db_test.sqlite")
 		})
 	}
 }
@@ -120,9 +116,8 @@ func TestUnitListAll(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			DB := setup(cs.emptyDB)
-			sqlDB, _ := DB.db.DB()
-			defer sqlDB.Close()
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
 
 			gotQuotes, gotErr := DB.ListAll()
 			if gotErr != nil {
@@ -130,8 +125,6 @@ func TestUnitListAll(t *testing.T) {
 			} else {
 				assert.Equalf(t, cs.wantListAllToReturnQuotes, gotQuotes, "got %v, while comparing returned quotes, want %v", gotQuotes, cs.wantListAllToReturnQuotes)
 			}
-
-			defer os.Remove("db_test.sqlite")
 		})
 	}
 }
@@ -162,9 +155,8 @@ func TestUnitGetQuote(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			DB := setup(cs.emptyDB)
-			sqlDB, _ := DB.db.DB()
-			defer sqlDB.Close()
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
 
 			gotQuote, gotErr := DB.GetQuote(cs.input)
 			if gotErr != nil {
@@ -172,8 +164,6 @@ func TestUnitGetQuote(t *testing.T) {
 			} else {
 				assert.Equalf(t, cs.wantGetQuoteToReturnQuote, gotQuote, "got %v, while comparing returned quote, want %v", gotQuote, cs.wantGetQuoteToReturnQuote)
 			}
-
-			defer os.Remove("db_test.sqlite")
 		})
 	}
 }

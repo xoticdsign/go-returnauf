@@ -10,24 +10,19 @@ package cache
 
 import (
 	"context"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
 // Настройка Redis для тестов
-func setup(emptyCache bool) *Cache {
+func setupTestCache(emptyCache bool) *Cache {
 	Cache, _ := RunRedis("127.0.0.1:6379", "")
 
 	if !emptyCache {
-		for _, quote := range responses.TestQuotes {
-			Cache.cache.Set(context.Background(), strconv.Itoa(quote.ID), quote.Quote, time.Duration(time.Minute*5))
-		}
+		Cache.PopulateCache()
 	}
 
 	return Cache
@@ -61,8 +56,7 @@ func TestUnitRunRedis(t *testing.T) {
 			if gotErr != nil {
 				assert.Equalf(t, cs.wantRunRedisToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantRunRedisToReturnErr)
 			} else {
-				client := gotCache.cache
-				defer client.Close()
+				defer gotCache.TeardownCache()
 			}
 		})
 	}
@@ -92,9 +86,9 @@ func TestUnitSet(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			Cache := setup(false)
+			Cache := setupTestCache(false)
 			client := Cache.cache
-			defer client.Close()
+			defer Cache.TeardownCache()
 
 			if cs.wantSetToReturnErr == redis.ErrClosed {
 				client.Close()
@@ -108,8 +102,6 @@ func TestUnitSet(t *testing.T) {
 
 				assert.Equalf(t, cs.value, gotValue, "got %v, while comparing recently set value, want %v", gotValue, cs.value)
 			}
-
-			defer client.FlushAll(context.Background())
 		})
 	}
 }
@@ -148,9 +140,9 @@ func TestUnitGet(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			Cache := setup(cs.emptyCache)
+			Cache := setupTestCache(cs.emptyCache)
 			client := Cache.cache
-			defer client.Close()
+			defer Cache.TeardownCache()
 
 			if cs.wantGetToReturnErr == redis.ErrClosed {
 				client.Close()
@@ -162,8 +154,6 @@ func TestUnitGet(t *testing.T) {
 			} else {
 				assert.Equalf(t, cs.wantGetToReturnValue, gotValue, "got %v, while comparing returned value, want %v", gotValue, cs.wantGetToReturnValue)
 			}
-
-			defer client.FlushAll(context.Background())
 		})
 	}
 }

@@ -2,9 +2,11 @@ package cache
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
 // Интерфейс, содержащий методы для работы с Кэшом
@@ -32,6 +34,21 @@ func RunRedis(addr string, password string) (*Cache, error) {
 		return nil, redis.ErrClosed
 	}
 	return &Cache{cache: client}, nil
+}
+
+// Добавляет цитаты в тестовый Кэш
+func (c *Cache) PopulateCache() {
+	for _, quote := range responses.TestQuotes {
+		c.cache.Set(context.Background(), strconv.Itoa(quote.ID), quote.Quote, time.Duration(time.Minute*5))
+	}
+}
+
+// Уничтожает тестовый Кэш
+func (c *Cache) TeardownCache() {
+	client := c.cache
+	client.FlushAll(context.Background())
+
+	defer client.Close()
 }
 
 // Сохраняет данные в Кэш

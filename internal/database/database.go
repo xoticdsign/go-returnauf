@@ -1,6 +1,8 @@
 package database
 
 import (
+	"os"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -29,6 +31,20 @@ func RunGORM(dbAddr string) (*DB, error) {
 		return nil, gorm.ErrInvalidDB
 	}
 	return &DB{db: gormDB}, nil
+}
+
+// Мигрирует цитаты в БД
+func (d *DB) MigrateQuotes() {
+	d.db.AutoMigrate(&responses.Quote{})
+	d.db.Table("quotes").Create(&responses.TestQuotes)
+}
+
+// Уничтожает тестовую БД
+func (d *DB) TeardownDB() {
+	sqlDB, _ := d.db.DB()
+	sqlDB.Close()
+
+	os.Remove("db_test.sqlite")
 }
 
 // Возвращает количество записей в БД

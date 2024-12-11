@@ -36,12 +36,14 @@ var ErrDictionary = map[int]Error{
 	},
 }
 
+// Цитаты для тестов в БД и Кэше
 var TestQuotes = []Quote{
 	{ID: 1, Quote: "Mock quote 1"},
 	{ID: 2, Quote: "Mock quote 2"},
 	{ID: 3, Quote: "Mock quote 3"},
 }
 
+// Цитаты для тестов в хендлерах
 var TestQuotesForHandlers = []Quote{
 	{ID: 0, Quote: "Mock quote 0"},
 	{ID: 1, Quote: "Mock quote 1"},

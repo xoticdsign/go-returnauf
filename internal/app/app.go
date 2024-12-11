@@ -21,25 +21,25 @@ import (
 
 // Инициализирует приложение
 func InitApp(conf config.Config) (*fiber.App, error) {
-	cache, err := cache.RunRedis(conf.RedisAddr, conf.RedisPassword)
+	Cache, err := cache.RunRedis(conf.RedisAddr, conf.RedisPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	logger, err := logging.RunZap()
+	Log, err := logging.RunZap()
 	if err != nil {
 		return nil, err
 	}
 
-	db, err := database.RunGORM(conf.DBAddr)
+	DB, err := database.RunGORM(conf.DBAddr)
 	if err != nil {
 		return nil, err
 	}
 
 	dependencies := &handlers.Dependencies{
-		DB:      db,
-		Cache:   cache,
-		Logger:  logger,
+		DB:      DB,
+		Cache:   Cache,
+		Logger:  Log,
 		Support: &utils.Support{},
 	}
 
@@ -71,4 +71,16 @@ func InitApp(conf config.Config) (*fiber.App, error) {
 	app.Get("/:id", dependencies.QuoteID)
 
 	return app, nil
+}
+
+func NewApp(dependencies handlers.Dependencies) *fiber.App {
+	return fiber.New(fiber.Config{
+		ServerHeader:  "auf-citaty",
+		StrictRouting: true,
+		CaseSensitive: true,
+		ReadTimeout:   time.Second * 20,
+		WriteTimeout:  time.Second * 20,
+		ErrorHandler:  dependencies.Error,
+		AppName:       "auf-citaty",
+	})
 }

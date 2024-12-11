@@ -9,15 +9,23 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	"github.com/xoticdsign/auf-citaty/internal/cache"
+	"github.com/xoticdsign/auf-citaty/internal/database"
+	"github.com/xoticdsign/auf-citaty/internal/logging"
+	"github.com/xoticdsign/auf-citaty/internal/utils"
 	"github.com/xoticdsign/auf-citaty/models/responses"
 )
 
+// Unit тесты
+
 // Настройка Fiber для тестов
-func setup(dependencies Dependencies) *fiber.App {
-	mockApp := fiber.New(fiber.Config{
+func setupTestApp(dependencies *Dependencies) *fiber.App {
+	return fiber.New(fiber.Config{
 		ServerHeader:  "auf-citaty",
 		StrictRouting: true,
 		CaseSensitive: true,
@@ -26,8 +34,6 @@ func setup(dependencies Dependencies) *fiber.App {
 		ErrorHandler:  dependencies.Error,
 		AppName:       "auf-citaty",
 	})
-
-	return mockApp
 }
 
 // Имитация БД, реализующая методы Queuer
@@ -158,7 +164,7 @@ func TestUnitListAll(t *testing.T) {
 			mockLogger.On("Warn", mock.Anything, mock.Anything)
 			mockLogger.On("Error", mock.Anything, mock.Anything)
 
-			mockApp := setup(*dependencies)
+			mockApp := setupTestApp(dependencies)
 
 			mockApp.Get("/", dependencies.ListAll)
 
@@ -281,7 +287,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			mockLogger.On("Warn", mock.Anything, mock.Anything)
 			mockLogger.On("Error", mock.Anything, mock.Anything)
 
-			mockApp := setup(*dependencies)
+			mockApp := setupTestApp(dependencies)
 
 			mockApp.Get("/random", dependencies.RandomQuote)
 
@@ -394,12 +400,127 @@ func TestUnitQuoteID(t *testing.T) {
 			mockLogger.On("Warn", mock.Anything, mock.Anything)
 			mockLogger.On("Error", mock.Anything, mock.Anything)
 
-			mockApp := setup(*dependencies)
+			mockApp := setupTestApp(dependencies)
 
 			mockApp.Get("/:id", dependencies.QuoteID)
 
 			req := httptest.NewRequest(cs.method, cs.path, nil)
 			resp, _ := mockApp.Test(req, -1)
+
+			gotBody, _ := io.ReadAll(resp.Body)
+			gotBodyStr := string(gotBody)
+
+			wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
+			wantBodyStr := string(wantBodyJSON)
+
+			assert.JSONEqf(t, wantBodyStr, gotBodyStr, "got %v, while comparing output, want %v", gotBodyStr, wantBodyStr)
+		})
+	}
+}
+
+// Integration тесты
+
+// Настройка БД для интеграционных тестов
+func setupTestDB(emptyDB bool) *database.DB {
+	DB, _ := database.RunGORM("db_test.sqlite")
+
+	if !emptyDB {
+		DB.MigrateQuotes()
+	}
+
+	return DB
+}
+
+// Настройка Кэша для интеграционных тестов
+func setupTestCache(emptyCache bool) *cache.Cache {
+	Cache, _ := cache.RunRedis("127.0.0.1:6379", "")
+
+	if !emptyCache {
+		Cache.PopulateCache()
+	}
+
+	return Cache
+}
+
+// Integration тест для хендлера ListAll
+func TestIntegrationListAll(t *testing.T) {
+	cases := []struct {
+		name         string
+		method       string
+		path         string
+		emptyDB      bool
+		emptyCache   bool
+		wantStatus   int
+		wantBodyToBe interface{}
+	}{
+		{
+			name:         "regular case",
+			method:       "GET",
+			path:         "/",
+			emptyDB:      false,
+			emptyCache:   true,
+			wantStatus:   200,
+			wantBodyToBe: responses.TestQuotes,
+		},
+		{
+			name:         "wrong method case",
+			method:       "POST",
+			path:         "/",
+			emptyDB:      false,
+			emptyCache:   true,
+			wantStatus:   405,
+			wantBodyToBe: responses.ErrDictionary[405],
+		},
+		{
+			name:         "wrong path case",
+			method:       "GET",
+			path:         "/wrongpath",
+			emptyDB:      false,
+			emptyCache:   true,
+			wantStatus:   404,
+			wantBodyToBe: responses.ErrDictionary[404],
+		},
+		{
+			name:         "empty db case",
+			method:       "GET",
+			path:         "/",
+			emptyDB:      true,
+			emptyCache:   true,
+			wantStatus:   404,
+			wantBodyToBe: responses.ErrDictionary[404],
+		},
+	}
+
+	for _, cs := range cases {
+		t.Run(cs.name, func(t *testing.T) {
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
+
+			Cache := setupTestCache(cs.emptyCache)
+			defer Cache.TeardownCache()
+
+			Log, _ := logging.RunZap()
+
+			dependencies := &Dependencies{
+				DB:      DB,
+				Cache:   Cache,
+				Logger:  Log,
+				Support: &utils.Support{},
+			}
+
+			testApp := setupTestApp(dependencies)
+
+			testApp.Use(requestid.New(requestid.Config{
+				Generator:  uuid.NewString,
+				ContextKey: "uuid",
+			}))
+
+			testApp.Get("/", dependencies.ListAll)
+
+			req := httptest.NewRequest(cs.method, cs.path, nil)
+			resp, _ := testApp.Test(req, -1)
+
+			assert.Equalf(t, cs.wantStatus, resp.StatusCode, "got %v, while comparing returned status, want %v", resp.StatusCode, cs.wantStatus)
 
 			gotBody, _ := io.ReadAll(resp.Body)
 			gotBodyStr := string(gotBody)
