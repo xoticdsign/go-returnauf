@@ -177,7 +177,7 @@ func TestUnitListAll(t *testing.T) {
 			wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
 			wantBodyStr := string(wantBodyJSON)
 
-			assert.JSONEqf(t, wantBodyStr, gotBodyStr, "got %v, while comparing output, want %v", gotBodyStr, wantBodyStr)
+			assert.JSONEq(t, wantBodyStr, gotBodyStr)
 		})
 	}
 }
@@ -259,7 +259,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			wantCacheSetToReturnErr:    errors.New("error"),
 			wantCacheGetToReturnQuote:  false,
 			wantCacheGetToReturnErr:    errors.New("error"),
-			wantBodyToBe:               responses.TestQuotesForHandlers[1],
+			wantBodyToBe:               responses.ErrDictionary[500],
 		},
 	}
 
@@ -300,7 +300,7 @@ func TestUnitRandomQuote(t *testing.T) {
 			wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
 			wantBodyStr := string(wantBodyJSON)
 
-			assert.JSONEqf(t, wantBodyStr, gotBodyStr, "got %v, while comparing output, want %v", gotBodyStr, wantBodyStr)
+			assert.JSONEq(t, wantBodyStr, gotBodyStr)
 		})
 	}
 }
@@ -375,7 +375,7 @@ func TestUnitQuoteID(t *testing.T) {
 			wantCacheSetToReturnErr:   errors.New("error"),
 			wantCacheGetToReturnQuote: false,
 			wantCacheGetToReturnErr:   errors.New("error"),
-			wantBodyToBe:              responses.TestQuotesForHandlers[1],
+			wantBodyToBe:              responses.ErrDictionary[500],
 		},
 	}
 
@@ -413,7 +413,7 @@ func TestUnitQuoteID(t *testing.T) {
 			wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
 			wantBodyStr := string(wantBodyJSON)
 
-			assert.JSONEqf(t, wantBodyStr, gotBodyStr, "got %v, while comparing output, want %v", gotBodyStr, wantBodyStr)
+			assert.JSONEq(t, wantBodyStr, gotBodyStr)
 		})
 	}
 }
@@ -520,7 +520,7 @@ func TestIntegrationListAll(t *testing.T) {
 			req := httptest.NewRequest(cs.method, cs.path, nil)
 			resp, _ := testApp.Test(req, -1)
 
-			assert.Equalf(t, cs.wantStatus, resp.StatusCode, "got %v, while comparing returned status, want %v", resp.StatusCode, cs.wantStatus)
+			assert.Equal(t, cs.wantStatus, resp.StatusCode)
 
 			gotBody, _ := io.ReadAll(resp.Body)
 			gotBodyStr := string(gotBody)
@@ -528,7 +528,269 @@ func TestIntegrationListAll(t *testing.T) {
 			wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
 			wantBodyStr := string(wantBodyJSON)
 
-			assert.JSONEqf(t, wantBodyStr, gotBodyStr, "got %v, while comparing output, want %v", gotBodyStr, wantBodyStr)
+			assert.JSONEq(t, wantBodyStr, gotBodyStr)
+		})
+	}
+}
+
+// Integration тест для хендлера RandomQuote
+func TestIntegrationRandomQuote(t *testing.T) {
+	cases := []struct {
+		name                 string
+		method               string
+		path                 string
+		emptyDB              bool
+		emptyCache           bool
+		wantCacheToReturnErr bool
+		wantStatus           int
+		wantBodyToBe         interface{}
+	}{
+		{
+			name:                 "general case",
+			method:               "GET",
+			path:                 "/random",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           200,
+			wantBodyToBe:         1,
+		},
+		{
+			name:                 "wrong method case",
+			method:               "POST",
+			path:                 "/random",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           405,
+			wantBodyToBe:         responses.ErrDictionary[405],
+		},
+		{
+			name:                 "wrong path case",
+			method:               "GET",
+			path:                 "/wrongpath",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           404,
+			wantBodyToBe:         responses.ErrDictionary[404],
+		},
+		{
+			name:                 "empty db case",
+			method:               "GET",
+			path:                 "/random",
+			emptyDB:              true,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           404,
+			wantBodyToBe:         responses.ErrDictionary[404],
+		},
+		{
+			name:                 "quote from cache case",
+			method:               "GET",
+			path:                 "/random",
+			emptyDB:              false,
+			emptyCache:           false,
+			wantCacheToReturnErr: false,
+			wantStatus:           200,
+			wantBodyToBe:         1,
+		},
+		{
+			name:                 "can't set cache case",
+			method:               "GET",
+			path:                 "/random",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: true,
+			wantStatus:           500,
+			wantBodyToBe:         responses.ErrDictionary[500],
+		},
+	}
+
+	for _, cs := range cases {
+		t.Run(cs.name, func(t *testing.T) {
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
+
+			Cache := setupTestCache(cs.emptyCache)
+			defer Cache.TeardownCache()
+
+			Log, _ := logging.RunZap()
+
+			dependencies := &Dependencies{
+				DB:      DB,
+				Cache:   Cache,
+				Logger:  Log,
+				Support: &MockSupport{},
+			}
+
+			testApp := setupTestApp(dependencies)
+
+			testApp.Use(requestid.New(requestid.Config{
+				Generator:  uuid.NewString,
+				ContextKey: "uuid",
+			}))
+
+			testApp.Get("/random", dependencies.RandomQuote)
+
+			if cs.wantCacheToReturnErr {
+				Cache.TeardownCache()
+			}
+
+			req := httptest.NewRequest(cs.method, cs.path, nil)
+			resp, _ := testApp.Test(req, -1)
+
+			assert.Equal(t, cs.wantStatus, resp.StatusCode)
+
+			gotBody, _ := io.ReadAll(resp.Body)
+
+			if cs.wantBodyToBe == 1 {
+				var v responses.Quote
+
+				err := json.Unmarshal(gotBody, &v)
+				if assert.Nil(t, err) {
+					assert.NotEqual(t, 0, v.ID)
+					assert.NotEqual(t, "", v.Quote)
+				}
+			} else {
+				gotBodyStr := string(gotBody)
+
+				wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
+				wantBodyStr := string(wantBodyJSON)
+
+				assert.JSONEq(t, wantBodyStr, gotBodyStr)
+			}
+		})
+	}
+}
+
+// Integration тест для хендлера QuoteID
+func TestIntegrationQuoteID(t *testing.T) {
+	cases := []struct {
+		name                 string
+		method               string
+		path                 string
+		emptyDB              bool
+		emptyCache           bool
+		wantCacheToReturnErr bool
+		wantStatus           int
+		wantBodyToBe         interface{}
+	}{
+		{
+			name:                 "general case",
+			method:               "GET",
+			path:                 "/1",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           200,
+			wantBodyToBe:         1,
+		},
+		{
+			name:                 "wrong method case",
+			method:               "POST",
+			path:                 "/1",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           405,
+			wantBodyToBe:         responses.ErrDictionary[405],
+		},
+		{
+			name:                 "wrong path case",
+			method:               "GET",
+			path:                 "/wrongpath",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           404,
+			wantBodyToBe:         responses.ErrDictionary[404],
+		},
+		{
+			name:                 "empty db case",
+			method:               "GET",
+			path:                 "/1",
+			emptyDB:              true,
+			emptyCache:           true,
+			wantCacheToReturnErr: false,
+			wantStatus:           404,
+			wantBodyToBe:         responses.ErrDictionary[404],
+		},
+		{
+			name:                 "quote from cache case",
+			method:               "GET",
+			path:                 "/1",
+			emptyDB:              false,
+			emptyCache:           false,
+			wantCacheToReturnErr: false,
+			wantStatus:           200,
+			wantBodyToBe:         1,
+		},
+		{
+			name:                 "can't set cache case",
+			method:               "GET",
+			path:                 "/1",
+			emptyDB:              false,
+			emptyCache:           true,
+			wantCacheToReturnErr: true,
+			wantStatus:           500,
+			wantBodyToBe:         responses.ErrDictionary[500],
+		},
+	}
+
+	for _, cs := range cases {
+		t.Run(cs.name, func(t *testing.T) {
+			DB := setupTestDB(cs.emptyDB)
+			defer DB.TeardownDB()
+
+			Cache := setupTestCache(cs.emptyCache)
+			defer Cache.TeardownCache()
+
+			Log, _ := logging.RunZap()
+
+			dependencies := &Dependencies{
+				DB:      DB,
+				Cache:   Cache,
+				Logger:  Log,
+				Support: &utils.Support{},
+			}
+
+			testApp := setupTestApp(dependencies)
+
+			testApp.Use(requestid.New(requestid.Config{
+				Generator:  uuid.NewString,
+				ContextKey: "uuid",
+			}))
+
+			testApp.Get("/:id", dependencies.QuoteID)
+
+			if cs.wantCacheToReturnErr {
+				Cache.TeardownCache()
+			}
+
+			req := httptest.NewRequest(cs.method, cs.path, nil)
+			resp, _ := testApp.Test(req, -1)
+
+			assert.Equal(t, cs.wantStatus, resp.StatusCode)
+
+			gotBody, _ := io.ReadAll(resp.Body)
+
+			if cs.wantBodyToBe == 1 {
+				var v responses.Quote
+
+				err := json.Unmarshal(gotBody, &v)
+				if assert.Nil(t, err) {
+					assert.NotEqual(t, 0, v.ID)
+					assert.NotEqual(t, "", v.Quote)
+				}
+			} else {
+				gotBodyStr := string(gotBody)
+
+				wantBodyJSON, _ := json.Marshal(&cs.wantBodyToBe)
+				wantBodyStr := string(wantBodyJSON)
+
+				assert.JSONEq(t, wantBodyStr, gotBodyStr)
+			}
 		})
 	}
 }

@@ -116,7 +116,7 @@ func (d *Dependencies) RandomQuote(c *fiber.Ctx) error {
 
 		err = d.Cache.Set(id, quote.Quote, time.Minute*1)
 		if err != nil {
-			d.Logger.Error("Не удалось кэшировать данные", c)
+			return fiber.ErrInternalServerError
 		}
 		d.Logger.Info("Обработан запрос", c)
 
@@ -162,7 +162,7 @@ func (d *Dependencies) QuoteID(c *fiber.Ctx) error {
 
 		err = d.Cache.Set(id, quote.Quote, time.Minute*1)
 		if err != nil {
-			d.Logger.Error("Не удалось кэшировать данные", c)
+			return fiber.ErrInternalServerError
 		}
 		d.Logger.Info("Обработан запрос", c)
 
