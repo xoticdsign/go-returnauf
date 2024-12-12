@@ -8,11 +8,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/keyauth"
 
-	"github.com/xoticdsign/auf-citaty/internal/cache"
-	"github.com/xoticdsign/auf-citaty/internal/database"
-	"github.com/xoticdsign/auf-citaty/internal/logging"
-	"github.com/xoticdsign/auf-citaty/internal/utils"
-	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/returnauf/internal/cache"
+	"github.com/xoticdsign/returnauf/internal/database"
+	"github.com/xoticdsign/returnauf/internal/logging"
+	"github.com/xoticdsign/returnauf/internal/utils"
+	"github.com/xoticdsign/returnauf/models/responses"
 )
 
 // Структура, содержащая интерфейсы для инъекции

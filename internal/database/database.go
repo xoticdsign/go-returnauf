@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/returnauf/models/responses"
 )
 
 // Интерфейс, содержащий методы для работы с БД

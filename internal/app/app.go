@@ -10,13 +10,13 @@ import (
 	"github.com/gofiber/swagger"
 	"github.com/google/uuid"
 
-	"github.com/xoticdsign/auf-citaty/config"
-	"github.com/xoticdsign/auf-citaty/internal/cache"
-	"github.com/xoticdsign/auf-citaty/internal/database"
-	"github.com/xoticdsign/auf-citaty/internal/handlers"
-	"github.com/xoticdsign/auf-citaty/internal/logging"
-	"github.com/xoticdsign/auf-citaty/internal/middleware"
-	"github.com/xoticdsign/auf-citaty/internal/utils"
+	"github.com/xoticdsign/returnauf/config"
+	"github.com/xoticdsign/returnauf/internal/cache"
+	"github.com/xoticdsign/returnauf/internal/database"
+	"github.com/xoticdsign/returnauf/internal/handlers"
+	"github.com/xoticdsign/returnauf/internal/logging"
+	"github.com/xoticdsign/returnauf/internal/middleware"
+	"github.com/xoticdsign/returnauf/internal/utils"
 )
 
 // Инициализирует приложение
@@ -44,13 +44,12 @@ func InitApp(conf config.Config) (*fiber.App, error) {
 	}
 
 	app := fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty",
 		StrictRouting: true,
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
 		ErrorHandler:  dependencies.Error,
-		AppName:       "auf-citaty",
+		AppName:       "returnauf",
 	})
 
 	app.Use(favicon.New(favicon.ConfigDefault))
@@ -61,7 +60,7 @@ func InitApp(conf config.Config) (*fiber.App, error) {
 	app.Use(keyauth.New(keyauth.Config{
 		Next:         middleware.AuthFiler,
 		ErrorHandler: dependencies.Error,
-		KeyLookup:    "query:auf-citaty-key",
+		KeyLookup:    "query:returnauf-key",
 		Validator:    middleware.KeyauthValidator,
 	}))
 
@@ -71,16 +70,4 @@ func InitApp(conf config.Config) (*fiber.App, error) {
 	app.Get("/:id", dependencies.QuoteID)
 
 	return app, nil
-}
-
-func NewApp(dependencies handlers.Dependencies) *fiber.App {
-	return fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty",
-		StrictRouting: true,
-		CaseSensitive: true,
-		ReadTimeout:   time.Second * 20,
-		WriteTimeout:  time.Second * 20,
-		ErrorHandler:  dependencies.Error,
-		AppName:       "auf-citaty",
-	})
 }

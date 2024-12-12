@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"github.com/xoticdsign/auf-citaty/models/responses"
+
+	"github.com/xoticdsign/returnauf/models/responses"
 )
 
 // Интерфейс, содержащий методы для работы с Кэшом

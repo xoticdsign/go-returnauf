@@ -14,11 +14,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/xoticdsign/auf-citaty/internal/cache"
-	"github.com/xoticdsign/auf-citaty/internal/database"
-	"github.com/xoticdsign/auf-citaty/internal/logging"
-	"github.com/xoticdsign/auf-citaty/internal/utils"
-	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/returnauf/internal/cache"
+	"github.com/xoticdsign/returnauf/internal/database"
+	"github.com/xoticdsign/returnauf/internal/logging"
+	"github.com/xoticdsign/returnauf/internal/utils"
+	"github.com/xoticdsign/returnauf/models/responses"
 )
 
 // Unit тесты
@@ -26,13 +26,12 @@ import (
 // Настройка Fiber для тестов
 func setupTestApp(dependencies *Dependencies) *fiber.App {
 	return fiber.New(fiber.Config{
-		ServerHeader:  "auf-citaty",
 		StrictRouting: true,
 		CaseSensitive: true,
 		ReadTimeout:   time.Second * 20,
 		WriteTimeout:  time.Second * 20,
 		ErrorHandler:  dependencies.Error,
-		AppName:       "auf-citaty",
+		AppName:       "returnauf",
 	})
 }
 

@@ -5,14 +5,14 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/xoticdsign/auf-citaty/config"
-	_ "github.com/xoticdsign/auf-citaty/docs"
-	"github.com/xoticdsign/auf-citaty/internal/app"
+	"github.com/xoticdsign/returnauf/config"
+	_ "github.com/xoticdsign/returnauf/docs"
+	"github.com/xoticdsign/returnauf/internal/app"
 )
 
 // Общее описание
 //
-// @title                      Auf Citaty API
+// @title                      returnauf
 // @version                    1.0.0
 // @description                TODO
 // @contact.name               xoti$
@@ -27,7 +27,7 @@ import (
 //
 // @securitydefinitions.apikey KeyAuth
 // @in                         query
-// @name                       auf-citaty-key
+// @name                       returnauf-key
 func main() {
 	godotenv.Load()
 

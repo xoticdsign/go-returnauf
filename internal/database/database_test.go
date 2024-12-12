@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"github.com/xoticdsign/auf-citaty/models/responses"
+	"github.com/xoticdsign/returnauf/models/responses"
 )
 
 // Настройка GORM для тестов

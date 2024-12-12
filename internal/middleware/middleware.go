@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/xoticdsign/auf-citaty/config"
+
+	"github.com/xoticdsign/returnauf/config"
 )
 
 // Фильтрует маршруты для аутентификации

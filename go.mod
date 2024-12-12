@@ -1,4 +1,4 @@
-module github.com/xoticdsign/auf-citaty
+module github.com/xoticdsign/returnauf
 
 go 1.22.5
 
