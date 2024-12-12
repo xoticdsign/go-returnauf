@@ -38,7 +38,7 @@ func TestUnitAuthFilter(t *testing.T) {
 			c.Path(cs.path)
 			got := AuthFiler(c)
 
-			assert.Equalf(t, cs.want, got, "got %v, while checking, if the path will be filtered, want %v", got, cs.want)
+			assert.Equal(t, cs.want, got)
 		})
 	}
 }
@@ -73,8 +73,8 @@ func TestUnitKeyauthValidator(t *testing.T) {
 
 	for _, cs := range cases {
 		t.Run(cs.name, func(t *testing.T) {
-			os.Setenv("AUF_CITATY_KEY", "valid")
-			defer os.Unsetenv("AUF_CITATY_KEY")
+			os.Setenv("API_KEY", "valid")
+			defer os.Unsetenv("API_KEY")
 
 			mockApp := fiber.New()
 
@@ -83,8 +83,8 @@ func TestUnitKeyauthValidator(t *testing.T) {
 
 			got, gotErr := KeyauthValidator(c, cs.input)
 
-			assert.Equalf(t, cs.want, got, "got %v, while comparing output, want %v", got, cs.want)
-			assert.Equalf(t, cs.wantErr, gotErr, "got %v, while comparing output, want %v", gotErr, cs.wantErr)
+			assert.Equal(t, cs.want, got)
+			assert.Equal(t, cs.wantErr, gotErr)
 		})
 	}
 }

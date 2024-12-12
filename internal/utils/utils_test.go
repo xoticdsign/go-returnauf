@@ -32,8 +32,8 @@ func TestUnitRandInt(t *testing.T) {
 				gotStrs = append(gotStrs, gotStr)
 
 				if x < 0 {
-					assert.NotEqualf(t, gotInt, gotInts[x-1], "got %v, while comparing newly generated int with the previous one, want %v", gotInt, gotInts[x-1])
-					assert.NotEqualf(t, gotStr, gotStrs[x-1], "got %v, while comparing newly generated string with the previous one, want %v", gotStr, gotStrs[x-1])
+					assert.NotEqual(t, gotInt, gotInts[x-1])
+					assert.NotEqual(t, gotStr, gotStrs[x-1])
 				}
 			}
 		})

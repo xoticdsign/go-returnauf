@@ -54,7 +54,7 @@ func TestUnitRunRedis(t *testing.T) {
 		t.Run(cs.name, func(t *testing.T) {
 			gotCache, gotErr := RunRedis(cs.addr, cs.password)
 			if gotErr != nil {
-				assert.Equalf(t, cs.wantRunRedisToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantRunRedisToReturnErr)
+				assert.Equal(t, cs.wantRunRedisToReturnErr, gotErr)
 			} else {
 				defer gotCache.TeardownCache()
 			}
@@ -96,11 +96,11 @@ func TestUnitSet(t *testing.T) {
 
 			gotErr := Cache.Set(cs.key, cs.value, time.Duration(time.Minute*5))
 			if gotErr != nil {
-				assert.Equalf(t, cs.wantSetToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantSetToReturnErr)
+				assert.Equal(t, cs.wantSetToReturnErr, gotErr)
 			} else {
 				gotValue := Cache.cache.Get(context.Background(), cs.key).Val()
 
-				assert.Equalf(t, cs.value, gotValue, "got %v, while comparing recently set value, want %v", gotValue, cs.value)
+				assert.Equal(t, cs.value, gotValue)
 			}
 		})
 	}
@@ -150,9 +150,9 @@ func TestUnitGet(t *testing.T) {
 
 			gotValue, gotErr := Cache.Get(cs.key)
 			if gotErr != nil {
-				assert.Equalf(t, cs.wantGetToReturnErr, gotErr, "got %v, while comparing returned error, want %v", gotErr, cs.wantGetToReturnErr)
+				assert.Equal(t, cs.wantGetToReturnErr, gotErr)
 			} else {
-				assert.Equalf(t, cs.wantGetToReturnValue, gotValue, "got %v, while comparing returned value, want %v", gotValue, cs.wantGetToReturnValue)
+				assert.Equal(t, cs.wantGetToReturnValue, gotValue)
 			}
 		})
 	}
