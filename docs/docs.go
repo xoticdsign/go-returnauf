@@ -214,7 +214,7 @@ const docTemplate = `{
     "securityDefinitions": {
         "KeyAuth": {
             "type": "apiKey",
-            "name": "auf-citaty-key",
+            "name": "returnauf-key",
             "in": "query"
         }
     }
@@ -226,8 +226,8 @@ var SwaggerInfo = &swag.Spec{
 	Host:             "127.0.0.1:8080",
 	BasePath:         "/",
 	Schemes:          []string{"http"},
-	Title:            "Auf Citaty API",
-	Description:      "TODO",
+	Title:            "returnauf",
+	Description:      "REST API с коллекцией самых мемных ауф цитат",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 }

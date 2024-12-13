@@ -20,11 +20,11 @@ info:
     email: xoticdollarsign@outlook.com
     name: xoti$
     url: https://t.me/xoticdsign
-  description: TODO
+  description: REST API с коллекцией самых мемных ауф цитат
   license:
     name: MIT
     url: https://mit-license.org/
-  title: Auf Citaty API
+  title: returnauf
   version: 1.0.0
 paths:
   /:
@@ -144,6 +144,6 @@ schemes:
 securityDefinitions:
   KeyAuth:
     in: query
-    name: auf-citaty-key
+    name: returnauf-key
     type: apiKey
 swagger: "2.0"

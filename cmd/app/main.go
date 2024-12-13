@@ -14,7 +14,7 @@ import (
 //
 // @title                      returnauf
 // @version                    1.0.0
-// @description                TODO
+// @description                REST API с коллекцией самых мемных ауф цитат
 // @contact.name               xoti$
 // @contact.url                https://t.me/xoticdsign
 // @contact.email              xoticdollarsign@outlook.com

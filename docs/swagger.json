@@ -7,8 +7,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "TODO",
-        "title": "Auf Citaty API",
+        "description": "REST API с коллекцией самых мемных ауф цитат",
+        "title": "returnauf",
         "contact": {
             "name": "xoti$",
             "url": "https://t.me/xoticdsign",
@@ -210,7 +210,7 @@
     "securityDefinitions": {
         "KeyAuth": {
             "type": "apiKey",
-            "name": "auf-citaty-key",
+            "name": "returnauf-key",
             "in": "query"
         }
     }
